@@ -1,5 +1,3 @@
-# # https://github.com/wkentaro/pytorch-fcn/blob/master/torchfcn/utils.py
-
 import numpy as np
 
 def _fast_hist(label_true, label_pred, n_class):
@@ -40,7 +38,6 @@ def add_hist(hist, label_trues, label_preds, n_class):
         hist += _fast_hist(lt.flatten(), lp.flatten(), n_class)
 
     return hist
-
 
 
 
