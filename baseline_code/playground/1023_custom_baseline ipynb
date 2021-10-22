@@ -27,7 +27,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": 1,
    "metadata": {
     "ExecuteTime": {
      "end_time": "2021-10-04T05:54:58.701660Z",
@@ -453,6 +453,15 @@
     "    df = df.sort_values(\"Number of annotations\", 0, False)\n",
     "    return df\n",
     "\n",
+    "\n",
+    "# df_t = data_frame(anns_file_path)\n",
+    "# df_p = data_frame(psud_file_path)\n",
+    "\n",
+    "# df = pd.concat([df_t, df_p], ignore_index=True)\n",
+    "# df = pd.DataFrame()\n",
+    "# for dataframe, colums in df_p:\n",
+    "#     if dataframe in df_t['Categories']:\n",
+    "#         df.append()\n",
     "# category labeling\n",
     "df = data_frame(train_path)\n",
     "sorted_temp_df = df.sort_index()\n",
@@ -524,6 +533,7 @@
     "            # 각각의 pixel 값에는 \"category id\" 할당\n",
     "            # Background = 0\n",
     "            masks = np.zeros((image_infos[\"height\"], image_infos[\"width\"]))\n",
+    "            # General trash = 1, ... , Cigarette = 10\n",
     "            anns = sorted(\n",
     "                anns, key=lambda idx: len(idx[\"segmentation\"][0]), reverse=False\n",
     "            )\n",
@@ -548,6 +558,7 @@
     "            return images, image_infos\n",
     "\n",
     "    def __len__(self) -> int:\n",
+    "        # 전체 dataset의 size를 return\n",
     "        return len(self.coco.getImgIds())"
    ]
   },
