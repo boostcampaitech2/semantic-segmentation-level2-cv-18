@@ -95,7 +95,7 @@ EXPERIMENTS:
             
 
 DATASET:
-    PATH: "../segmentation/input/data"
+    PATH: "/opt/ml/segmentation/input/data"
     ANNS_FILE_NAME: "train_all.json"
     TRAIN_FILE_NAME: "train_all.json"
     VAL_FILE_NAME: "val.json"
