@@ -20,15 +20,15 @@ OPTIMIZER_AVAILABLE:
 
 
 SELECTED:
-    # IF you use torchvision model
+    #### 1. IF you use torchvision model
     FRAMEWORK: "torchvision"
     MODEL: "lraspp_mobilenet_v3_large" # also used for submission save.
     MODEL_CFG:
         pretrained: True
       
-    # 2. IF you use smp model
-    # smp.create_model(**cfg["SELECTED"]["MODEL_CFG"]) 형태로 사용하기 때문에
-    # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
+    #### 2. IF you use smp model
+    #### smp.create_model(**cfg["SELECTED"]["MODEL_CFG"]) 형태로 사용하기 때문에
+    #### MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
     # FRAMEWORK: "segmentation_models.pytorch"
     # MODEL: "UNetPlusPlus" # also used for submission save.
     # MODEL_CFG: # 이하 예시 - 모델에 따른 백본이나 기학습 가중치를 set_smp_model에서 지정해도 될듯
