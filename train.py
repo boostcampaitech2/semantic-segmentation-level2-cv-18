@@ -7,6 +7,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+from torch.cuda.amp import autocast, GradScaler
 import torchvision
 import segmentation_models_pytorch as smp
 
@@ -115,20 +116,27 @@ def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimi
 
         hist = np.zeros((n_class, n_class))
         for step, (images, masks, _) in enumerate(train_dataloader):
-            images = torch.stack(images)       
-            masks = torch.stack(masks).long() 
+            images, masks = torch.stack(images), torch.stack(masks).long() 
             
             # gpu 연산을 위해 device 할당
             images, masks = images.to(device), masks.to(device)
             
-            # device 할당
-            model = model.to(device)
+            if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
+                with autocast():
+                    # device 할당
+                    model = model.to(device)
+                    # inference
+                    outputs = model(images)['out']
+                    # loss 계산 (cross entropy loss)
+                    loss = criterion(outputs, masks)
+            else:
+                # device 할당
+                model = model.to(device)
+                # inference
+                outputs = model(images)['out']
+                # loss 계산 (cross entropy loss)
+                loss = criterion(outputs, masks)
             
-            # inference
-            outputs = model(images)['out']
-            
-            # loss 계산 (cross entropy loss)
-            loss = criterion(outputs, masks)
             train_avg_loss += loss.item() / len(masks)
             optimizer.zero_grad()
             loss.backward()
