@@ -31,7 +31,8 @@ def cfg_check(cfg):
     if selected_framework == "torchvision":
         assert(cfg["SELECTED"]["MODEL"] in cfg["MODELS_AVAILABLE"][selected_framework])
     elif selected_framework == "segmentation_models_pytorch":
-        assert(cfg["SELECTED"]["MODEL_CFG"]["arch"] in cfg["MODELS_AVAILABLE"][selected_framework])
+        assert(cfg["SELECTED"]["MODEL_CFG"]["arch"] in cfg["DECODER_AVAILABLE"])
+        assert(cfg["SELECTED"]["MODEL_CFG"]["encoder_name"] in cfg["ENCODER_AVAILABLE"])
     
     
 def get_cfg_from(args):
