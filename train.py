@@ -1,19 +1,104 @@
+import os
+from pprint import pprint
+import warnings 
+warnings.filterwarnings('ignore')
+
 import numpy as np
 
 import torch
+import torch.nn as nn
+import torchvision
+import segmentation_models_pytorch as smp
 
 import wandb
 
-from util.ploting import plot_examples
-from util.utils import label_accuracy_score, add_hist
+from util.ploting import (
+    plot_examples, plot_train_dist
+)
+from util.utils import (
+    label_accuracy_score, add_hist
+)
+from util.eda import (
+    eda, get_df_train_categories_counts, add_bg_index_to
+)
+
+from data.dataloader import (
+    get_dataloaders
+)
+
+from config.read_config import (
+    print_ver_n_settings, get_args, get_cfg_from
+)
+from config.fix_seed import (
+    fix_seed_as
+)
+from config.wnb import (
+    wnb_init
+)
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def is_same_width(t1, t2):
+    return t1.shape[-2] == t2.size(-2)
+
+def is_same_height(t1, t2):
+    return t1.shape[-1] == t2.size(-1)
+
+def simple_check(cfg, model):
+    # 구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test
+    x = torch.randn([2, 3, 512, 512])
+    out = model(x)['out']
+    assert(is_same_width(x, out) and is_same_height(x, out))
+    assert(out.size(-3) == cfg["DATASET"]["NUM_CLASSES"])
+
+
+def set_torchvision_model(cfg, model):
+    num_classes = cfg["DATASET"]["NUM_CLASSES"]
+    model_selected = cfg["SELECTED"]["MODEL"]
+    
+    if model_selected == "lraspp_mobilenet_v3_large":
+        model.classifier.low_classifier = nn.Conv2d(40, num_classes, kernel_size=(1, 1), stride=(1, 1))
+        model.classifier.high_classifier = nn.Conv2d(128, num_classes, kernel_size=(1, 1), stride=(1, 1))
+    elif "deeplab" in model_selected:
+        model.classifier[-1] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
+    elif "fcn" in model_selected:
+        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+    
+    return model
+
+
+###################################
+## set_torchvision_model 함수처럼 짤 수 있으면 좋을 것 같습니다.
+def set_smp_model(cfg, model):
+    return model
+###################################
+
+
+def get_trainable_model(cfg):
+    cfg_selected = cfg["SELECTED"]
+    model_selected = cfg_selected["MODEL"]
+    frame_selected = cfg_selected["FRAMEWORK"]
+    num_classes = cfg["DATASET"]["NUM_CLASSES"]
+    
+    if frame_selected == "torchvision":
+        model = getattr(torchvision.models.segmentation, model_selected)(**cfg_selected["MODEL_CFG"])
+        model = set_torchvision_model(cfg, model)
+    elif cfg_selected["FRAMEWORK"] == "segmentation_models.pytorch":
+        model = getattr(smp, model_selected)(**cfg_selected["MODEL_CFG"])
+        model = set_smp_model(cfg, model)
+    
+    simple_check(cfg, model)
+    
+    return model
 
 
 def save_model(model, saved_dir, file_name):
     check_point = {'net': model.state_dict()}
     output_path = os.path.join(saved_dir, file_name)
     torch.save(model, output_path)
-
-
+    
+    
 def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
     print(f'Start training..')
     n_class = 11
@@ -140,3 +225,43 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
 
     return avrg_loss
 
+
+def main():
+    cfg = get_cfg_from(get_args())
+    fix_seed_as(cfg["SEED"])
+    
+    wnb_run = wnb_init(cfg)
+    
+    print_ver_n_settings()
+    eda(cfg)
+    pprint(cfg)
+    
+    df_train_categories_counts = get_df_train_categories_counts(cfg)
+    plot_train_dist(cfg, df_train_categories_counts)
+    sorted_df_train_categories_counts = add_bg_index_to(df_train_categories_counts)
+    category_names = sorted_df_train_categories_counts["Categories"].to_list()
+    
+    model = get_trainable_model(cfg)
+    train_dataloader, val_dataloader, _ = get_dataloaders(cfg, category_names)
+    
+    train(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+          model=model, 
+          train_dataloader=train_dataloader, 
+          val_dataloader=val_dataloader, 
+          criterion=nn.CrossEntropyLoss(), 
+          optimizer=torch.optim.Adam(params = model.parameters(), 
+                                     lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
+                                     weight_decay=1e-6), 
+          saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+          val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+          device=DEVICE,
+          category_names=category_names,
+          cfg=cfg)
+    
+    if wnb_run is not None:
+        wnb_run.finish()
+        
+        
+if __name__ == "__main__":
+    main()
+    
