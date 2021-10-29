@@ -15,6 +15,7 @@ import torch
 from .utils import label_to_color_image
 
 
+
 def plot_examples(
     model, cfg, device, mode:str=None, batch_id:int=0, num_examples:int=8, dataloaer=None
 ):
@@ -104,7 +105,7 @@ def plot_examples(
                     model.eval()
 
                     # inference
-                    outs = model(torch.stack(temp_images).to(device))
+                    outs = model(torch.stack(temp_images).to(device))["out"]
                     oms = torch.argmax(outs, dim=1).detach().cpu().numpy()
                     break
                 else:
@@ -142,3 +143,4 @@ def plot_train_dist(cfg, df):
     sns.barplot(x="Number of annotations", y="Categories", data=df, ax=ax, color="skyblue")
     if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
         wandb.log({"Distribution of train set": wandb.Image(ax)})
+        
