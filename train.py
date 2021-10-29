@@ -49,7 +49,11 @@ def is_same_height(t1, t2):
 def simple_check(cfg, model):
     # 구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test
     x = torch.randn([2, 3, 512, 512])
-    out = model(x)['out']
+    if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+        out = model(x)['out']
+    elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+        out = model(x)
+    
     assert(is_same_width(x, out) and is_same_height(x, out))
     assert(out.size(-3) == cfg["DATASET"]["NUM_CLASSES"])
 
@@ -85,7 +89,7 @@ def get_trainable_model(cfg):
     if frame_selected == "torchvision":
         model = getattr(torchvision.models.segmentation, model_selected)(**cfg_selected["MODEL_CFG"])
         model = set_torchvision_model(cfg, model)
-    elif cfg_selected["FRAMEWORK"] == "segmentation_models.pytorch":
+    elif frame_selected == "segmentation_models_pytorch":
         model = smp.create_model(**cfg_selected["MODEL_CFG"])
         model = set_smp_model(cfg, model)
     
@@ -99,6 +103,32 @@ def save_model(model, saved_dir, file_name):
     output_path = os.path.join(saved_dir, file_name)
     torch.save(model, output_path)
     
+    
+def calc_loss(cfg, model, images, masks, criterion, device):
+    frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+    if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
+        with autocast():
+            # device 할당
+            model = model.to(device)
+            # inference
+            if frame_selected == "torchvision": 
+                outputs = model(images)['out']
+            elif frame_selected == "segmentation_models_pytorch": 
+                outputs = model(images)
+            # loss 계산 (cross entropy loss)
+            loss = criterion(outputs, masks)
+    else:
+        # device 할당
+        model = model.to(device)
+        # inference
+        if frame_selected == "torchvision":
+            outputs = model(images)['out']
+        elif frame_selected == "segmentation_models_pytorch":
+            outputs = model(images)
+        # loss 계산 (cross entropy loss)
+        loss = criterion(outputs, masks)
+    
+    return [model, outputs, loss]
     
 def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
     print(f'Start training..')
@@ -121,21 +151,7 @@ def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimi
             # gpu 연산을 위해 device 할당
             images, masks = images.to(device), masks.to(device)
             
-            if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
-                with autocast():
-                    # device 할당
-                    model = model.to(device)
-                    # inference
-                    outputs = model(images)['out']
-                    # loss 계산 (cross entropy loss)
-                    loss = criterion(outputs, masks)
-            else:
-                # device 할당
-                model = model.to(device)
-                # inference
-                outputs = model(images)['out']
-                # loss 계산 (cross entropy loss)
-                loss = criterion(outputs, masks)
+            model, outputs, loss = calc_loss(cfg, model, images, masks, criterion, device)
             
             train_avg_loss += loss.item() / len(masks)
             optimizer.zero_grad()
@@ -177,6 +193,7 @@ def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimi
                           batch_id=0, 
                           num_examples=8, 
                           dataloaer=train_dataloader)
+    print("\nEnd of train\n")
             
 
 def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg):
@@ -197,10 +214,8 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
             images, masks = images.to(device), masks.to(device)            
             
             # device 할당
-            model = model.to(device)
+            model, outputs, loss = calc_loss(cfg, model, images, masks, criterion, device)
             
-            outputs = model(images)['out']
-            loss = criterion(outputs, masks)
             total_loss += loss
             cnt += 1
             

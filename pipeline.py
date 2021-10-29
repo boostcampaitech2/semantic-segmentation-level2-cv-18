@@ -44,8 +44,8 @@ from config.wnb import (
 
 # GPU 사용 가능 여부에 따라 device 정보 저장
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    
-    
+
+
 if __name__ == "__main__":
     cfg = get_cfg_from(get_args())
     fix_seed_as(cfg["SEED"])

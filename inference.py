@@ -72,8 +72,10 @@ def inference(model, test_dataloader, device, cfg):
         for step, (imgs, image_infos) in enumerate(tqdm(test_dataloader)):
             
             # inference (512 x 512)
-            # outs = model(torch.stack(imgs).to(device))
-            outs = model(torch.stack(imgs).to(device))['out']
+            if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+                outs = model(torch.stack(imgs).to(device))['out']
+            elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+                outs = model(torch.stack(imgs).to(device))
             oms = torch.argmax(outs.squeeze(), dim=1).detach().cpu().numpy()
             
             # resize (256 x 256)
