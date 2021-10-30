@@ -226,7 +226,7 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
                           batch_id=0, 
                           num_examples=8, 
                           dataloaer=train_dataloader)
-    print("\nEnd of train\n")
+    print("End of train\n")
             
 
 def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg):
@@ -239,8 +239,8 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
         cnt = 0
         
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(val_dataloader):
-            
+        pbar_val = tqdm(enumerate(train_dataloader), total=len(val_dataloader))
+        for step, (images, masks, _) in pbar_val:
             images = torch.stack(images)       
             masks = torch.stack(masks).long()  
 
@@ -261,9 +261,12 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
         IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , category_names)]
         
         avrg_loss = total_loss / cnt
-        print(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
-                mIoU: {round(mIoU, 4)}')
+        
+        description_valid = f"Valid #{epoch} Avg Loss: {round(avg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, mIoU: {round(mIoU, 4)}"        
+        pbar_valid.set_description(description_valid)
+        
         print(f'IoU by class : {IoU_by_class}')
+        
         if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             dict_IoU_by_class = {classes : round(IoU,4) for IoU, classes in zip(IoU , category_names)}
             wandb.log({'Val/Avg Loss': round(avrg_loss.item(), 4), 
@@ -284,12 +287,14 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
 
 def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
     if not cfg["KFOLD"]["TURN_ON"]:
+        criterion=get_criterion()
+        optimizer=get_optim(cfg, model)
         train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
                       model=model, 
                       train_dataloader=train_dataloader, 
                       val_dataloader=val_dataloader, 
-                      criterion=get_criterion(), 
-                      optimizer=get_optim(cfg, model), 
+                      criterion=criterion, 
+                      optimizer=optimizer, 
                       saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
                       val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
                       device=device,
