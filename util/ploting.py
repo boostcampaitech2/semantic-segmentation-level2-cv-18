@@ -103,7 +103,7 @@ def plot_examples(
                 loc=2,
                 borderaxespad=0,
             )
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             wandb.log({f"{mode.title()}/viz": wandb.Image(fig)})
 
     # test set에 대한 시각화
@@ -145,7 +145,7 @@ def plot_examples(
                 loc=2,
                 borderaxespad=0,
             )
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             wandb.log({f"{mode.title()}/viz": wandb.Image(fig)})
 
 
@@ -153,6 +153,6 @@ def plot_train_dist(cfg, df):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     ax.set_title("Category Distribution of train set")
     sns.barplot(x="Number of annotations", y="Categories", data=df, ax=ax, color="skyblue")
-    if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         wandb.log({"Distribution of train set": wandb.Image(ax)})
         

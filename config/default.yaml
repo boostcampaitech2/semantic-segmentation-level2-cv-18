@@ -63,7 +63,7 @@ SELECTED:
     FRAMEWORK: "segmentation_models_pytorch"
     MODEL_CFG:
         arch: "fpn"                 # DECODER
-        encoder_name: "timm-mobilenetv3_large_100" # ENCODER
+        encoder_name: "efficientnet-b0" # ENCODER
         encoder_weights: "imagenet"          # ENCODER 마다 쓸 수 있는 DATASET 이 달라서 확인하고 넣어야함.
         # pretrained: 'imagenet' # advpros 등
         in_channels: 3 # fixed
@@ -87,15 +87,18 @@ EXPERIMENTS:
     NUM_WORKERS: 4
     VAL_EVERY: 1
     
+    KFOLD:
+        TURN_ON: False
+        NUM_FOLD: 5
     
     AUTOCAST_TURN_ON: True
     
-    
-    WNB_TURN_ON: True
-    WNB_INIT:
-        entity: "ai_tech_level2-cv-18"
-        project: "seunghun_T2042"
-        name: "efficientnet-b0-pspnet" # recommended to change
+    WNB:
+        TURN_ON: True
+        INIT:
+            entity: "ai_tech_level2-cv-18"
+            project: "seunghun_T2042"
+            name: "tqdm_test" # recommended to change
     
     
     SAVED_DIR: 
@@ -120,11 +123,11 @@ EXPERIMENTS:
             p: 0.5
     TEST_n_VAL_TRANS: # ToTensorV2 는 기본으로 들어가있음.
     
-    
-    TTA_TURN_ON: False
-    TTA_CFG:
-        Rotate90: 
-            angles: [0, 180]
+    TTA:
+        TURN_ON: False
+        CFG:
+            Rotate90: 
+                angles: [0, 180]
             
 
 DATASET:

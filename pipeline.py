@@ -67,8 +67,8 @@ if __name__ == "__main__":
     train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
     
     model_trained = get_trained_model(cfg, DEVICE)
-    if cfg["EXPERIMENTS"]["TTA_TURN_ON"]:
-        tta_cfg = cfg["EXPERIMENTS"]["TTA_CFG"]
+    if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
+        tta_cfg = cfg["EXPERIMENTS"]["TTA"]["CFG"]
         tta_trans = tta.Compose([getattr(tta.transforms, trans)(**cfg) for trans, cfg in tta_cfg.items()])
         model_trained = tta.SegmentationTTAWrapper(model=model_trained, 
                                                    transforms=tta_trans,

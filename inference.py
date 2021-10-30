@@ -97,7 +97,7 @@ def inference(model, test_dataloader, device, cfg):
             
             file_name_list.append([i['file_name'] for i in image_infos])
     
-    if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         plot_examples(model=model,
                       cfg=cfg,
                       device=device,
@@ -166,8 +166,8 @@ def main():
     _, _, test_dataloader = get_dataloaders(cfg, category_names)
     
     model_trained = get_trained_model(cfg, DEVICE)
-    if cfg["EXPERIMENTS"]["TTA_TURN_ON"]:
-        tta_cfg = cfg["EXPERIMENTS"]["TTA_CFG"]
+    if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
+        tta_cfg = cfg["EXPERIMENTS"]["TTA"]["CFG"]
         tta_trans = tta.Compose([getattr(tta.transforms, trans)(**cfg) for trans, cfg in tta_cfg.items()])
         model_trained = tta.SegmentationTTAWrapper(model=model_trained, 
                                                    transforms=tta_trans,

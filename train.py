@@ -108,7 +108,7 @@ def save_model(model, saved_dir, file_name):
 def calc_loss(cfg, model, images, masks, criterion, device):
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
     if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
-        with autocast():
+        with autocast(enabled=True):
             # device 할당
             model = model.to(device)
             # inference
@@ -163,7 +163,7 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
     best_loss = 9999999
     
     # WandB watch model.
-    if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         wandb.watch(model, log=all)
     
     for epoch in range(num_epochs):
@@ -213,7 +213,7 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
                 save_model(model, saved_dir, file_name=get_file_name(cfg))
             print()
         
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             train_avg_loss /= len(train_dataloader)
             train_avg_mIoU /= len(train_dataloader)
             wandb.log({'Train/Epoch':epoch+1, 
@@ -264,7 +264,7 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
         print(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
                 mIoU: {round(mIoU, 4)}')
         print(f'IoU by class : {IoU_by_class}')
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             dict_IoU_by_class = {classes : round(IoU,4) for IoU, classes in zip(IoU , category_names)}
             wandb.log({'Val/Avg Loss': round(avrg_loss.item(), 4), 
                        'Val/Acc': round(acc, 4),
@@ -283,29 +283,18 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
 
 
 def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
-    train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
-                  model=model, 
-                  train_dataloader=train_dataloader, 
-                  val_dataloader=val_dataloader, 
-                  criterion=get_criterion(), 
-                  optimizer=get_optim(cfg, model), 
-                  saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
-                  val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
-                  device=device,
-                  category_names=category_names,
-                  cfg=cfg)
-    # if not kfold_turn_on:
-    #     train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
-    #               model=model, 
-    #               train_dataloader=train_dataloader, 
-    #               val_dataloader=val_dataloader, 
-    #               criterion=get_criterion(), 
-    #               optimizer=get_optim(), 
-    #               saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
-    #               val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
-    #               device=DEVICE,
-    #               category_names=category_names,
-    #               cfg=cfg)
+    if not cfg["KFOLD"]["TURN_ON"]:
+        train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+                      model=model, 
+                      train_dataloader=train_dataloader, 
+                      val_dataloader=val_dataloader, 
+                      criterion=get_criterion(), 
+                      optimizer=get_optim(cfg, model), 
+                      saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                      val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+                      device=device,
+                      category_names=category_names,
+                      cfg=cfg)
     # else:
     #     # k-fold logic
     
