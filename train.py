@@ -1,5 +1,6 @@
 import os
 from pprint import pprint
+from tqdm import tqdm
 import warnings 
 warnings.filterwarnings('ignore')
 
@@ -144,10 +145,19 @@ def get_file_name(cfg):
         submission_file = f"{arch_name}_{enc_name}_{enc_weights_name}.pt"
     
     return submission_file
+   
+    
+def get_criterion():
+    return nn.CrossEntropyLoss()
+
+
+def get_optim(cfg, model):
+    return torch.optim.Adam(params = model.parameters(), 
+                            lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
+                            weight_decay=1e-6)
     
     
-    
-def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
+def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
     print(f'Start training..')
     n_class = 11
     best_loss = 9999999
@@ -162,7 +172,8 @@ def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimi
         train_avg_loss, train_avg_mIoU = 0.0, 0.0
 
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(train_dataloader):
+        pbar_train = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
+        for step, (images, masks, _) in pbar_train:
             images, masks = torch.stack(images), torch.stack(masks).long() 
             
             # gpu 연산을 위해 device 할당
@@ -182,10 +193,14 @@ def train(num_epochs, model, train_dataloader, val_dataloader, criterion, optimi
             acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
             train_avg_mIoU += mIoU
             
-            # step 주기에 따른 loss 출력
-            if (step + 1) % 25 == 0:
-                print(f'Epoch [{epoch+1}/{num_epochs}], Step [{step+1}/{len(train_dataloader)}], \
-                        Loss: {round(loss.item(),4)}, mIoU: {round(mIoU,4)}')
+            
+            description_train = f"# epoch : {epoch + 1}  Loss: {round(loss.item(),4)}   mIoU: {round(mIoU,4)}"
+            pbar_train.set_description(description_train)
+            
+            # # step 주기에 따른 loss 출력
+            # if (step + 1) % 25 == 0:
+            #     print(f'Epoch [{epoch+1}/{num_epochs}], Step [{step+1}/{len(train_dataloader)}], \
+            #             Loss: {round(loss.item(),4)}, mIoU: {round(mIoU,4)}')
              
         # validation 주기에 따른 loss 출력 및 best model 저장
         if (epoch + 1) % val_every == 0:
@@ -267,6 +282,35 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
     return avrg_loss
 
 
+def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
+    train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+                  model=model, 
+                  train_dataloader=train_dataloader, 
+                  val_dataloader=val_dataloader, 
+                  criterion=get_criterion(), 
+                  optimizer=get_optim(cfg, model), 
+                  saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                  val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+                  device=device,
+                  category_names=category_names,
+                  cfg=cfg)
+    # if not kfold_turn_on:
+    #     train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+    #               model=model, 
+    #               train_dataloader=train_dataloader, 
+    #               val_dataloader=val_dataloader, 
+    #               criterion=get_criterion(), 
+    #               optimizer=get_optim(), 
+    #               saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+    #               val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+    #               device=DEVICE,
+    #               category_names=category_names,
+    #               cfg=cfg)
+    # else:
+    #     # k-fold logic
+    
+    
+
 def main():
     cfg = get_cfg_from(get_args())
     fix_seed_as(cfg["SEED"])
@@ -285,19 +329,7 @@ def main():
     model = get_trainable_model(cfg)
     train_dataloader, val_dataloader, _ = get_dataloaders(cfg, category_names)
     
-    train(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
-          model=model, 
-          train_dataloader=train_dataloader, 
-          val_dataloader=val_dataloader, 
-          criterion=nn.CrossEntropyLoss(), 
-          optimizer=torch.optim.Adam(params = model.parameters(), 
-                                     lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
-                                     weight_decay=1e-6), 
-          saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
-          val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
-          device=DEVICE,
-          category_names=category_names,
-          cfg=cfg)
+    train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
     
     if wnb_run is not None:
         wnb_run.finish()

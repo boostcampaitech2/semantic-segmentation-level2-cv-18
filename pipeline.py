@@ -64,19 +64,7 @@ if __name__ == "__main__":
     model = get_trainable_model(cfg)
     train_dataloader, val_dataloader, test_dataloader = get_dataloaders(cfg, category_names)
     
-    train(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
-          model=model, 
-          train_dataloader=train_dataloader, 
-          val_dataloader=val_dataloader, 
-          criterion=nn.CrossEntropyLoss(), 
-          optimizer=torch.optim.Adam(params = model.parameters(), 
-                                     lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
-                                     weight_decay=1e-6), 
-          saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
-          val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
-          device=DEVICE,
-          category_names=category_names,
-          cfg=cfg)
+    train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
     
     model_trained = get_trained_model(cfg, DEVICE)
     if cfg["EXPERIMENTS"]["TTA_TURN_ON"]:
