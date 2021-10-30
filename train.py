@@ -12,7 +12,13 @@ from torch.cuda.amp import autocast, GradScaler
 import torchvision
 import segmentation_models_pytorch as smp
 
+# Fold를 위한 라이브러리
+from torch.utils.data import DataLoader
+from torch.utils.data import SubsetRandomSampler
+from sklearn.model_selection import GroupKFold, KFold
+
 import wandb
+
 
 from util.ploting import (
     plot_examples, plot_train_dist
@@ -25,7 +31,7 @@ from util.eda import (
 )
 
 from data.dataloader import (
-    get_dataloaders
+    get_dataloaders, get_datasets, collate_fn
 )
 
 from config.read_config import (
@@ -132,19 +138,23 @@ def calc_loss(cfg, model, images, masks, criterion, device):
     return [model, outputs, loss]
     
     
-def get_file_name(cfg):
-    submission_file = ""
+def get_model_file_name(cfg, fold:int=None):
+    saved_model_file = ""
     seleceted_framework = cfg["SELECTED"]["FRAMEWORK"]
     
     if seleceted_framework == "torchvision":
-        submission_file = f"{cfg['SELECTED']['MODEL']}.pt"
+        saved_model_file = f"{cfg['SELECTED']['MODEL']}"
     elif seleceted_framework == "segmentation_models_pytorch":
         arch_name = cfg['SELECTED']['MODEL_CFG']['arch']
         enc_name = cfg['SELECTED']['MODEL_CFG']['encoder_name']
         enc_weights_name = cfg['SELECTED']['MODEL_CFG']['encoder_weights']
-        submission_file = f"{arch_name}_{enc_name}_{enc_weights_name}.pt"
+        saved_model_file = f"{arch_name}_{enc_name}_{enc_weights_name}"
+        
+    if fold is not None:
+        saved_model_file += f"_{fold+1}"
     
-    return submission_file
+    saved_model_file += ".pt"
+    return saved_model_file
    
     
 def get_criterion():
@@ -157,8 +167,8 @@ def get_optim(cfg, model):
                             weight_decay=1e-6)
     
     
-def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
-    print(f'Start training..')
+def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg, fold:int=None):
+    print(f'Start training ...')
     n_class = 11
     best_loss = 9999999
     
@@ -197,10 +207,6 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
             description_train = f"# epoch : {epoch + 1}  Loss: {round(loss.item(),4)}   mIoU: {round(mIoU,4)}"
             pbar_train.set_description(description_train)
             
-            # # step 주기에 따른 loss 출력
-            # if (step + 1) % 25 == 0:
-            #     print(f'Epoch [{epoch+1}/{num_epochs}], Step [{step+1}/{len(train_dataloader)}], \
-            #             Loss: {round(loss.item(),4)}, mIoU: {round(mIoU,4)}')
              
         # validation 주기에 따른 loss 출력 및 best model 저장
         if (epoch + 1) % val_every == 0:
@@ -210,8 +216,8 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
                 print(f"Save model in {saved_dir}")
                 best_loss = avrg_loss
                 
-                save_model(model, saved_dir, file_name=get_file_name(cfg))
-            print()
+                save_model(model, saved_dir, file_name=get_model_file_name(cfg, fold))
+                print()
         
         if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             train_avg_loss /= len(train_dataloader)
@@ -226,11 +232,13 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
                           batch_id=0, 
                           num_examples=8, 
                           dataloaer=train_dataloader)
+            
     print("End of train\n")
             
 
-def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg):
-    print(f'Start validation #{epoch}')
+def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg, fold:int=None):
+    print(f'Start validation ...')
+    
     model.eval()
 
     with torch.no_grad():
@@ -239,7 +247,7 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
         cnt = 0
         
         hist = np.zeros((n_class, n_class))
-        pbar_val = tqdm(enumerate(train_dataloader), total=len(val_dataloader))
+        pbar_val = tqdm(enumerate(val_dataloader), total=len(val_dataloader))
         for step, (images, masks, _) in pbar_val:
             images = torch.stack(images)       
             masks = torch.stack(masks).long()  
@@ -251,19 +259,20 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
             
             total_loss += loss
             cnt += 1
+            avrg_loss = total_loss / cnt
             
             outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
             masks = masks.detach().cpu().numpy()
             
             hist = add_hist(hist, masks, outputs, n_class=n_class)
+            acc, _, mIoU, _, _ = label_accuracy_score(hist)
+            
+            description_val = f"# epoch : {epoch} Avg Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, mIoU: {round(mIoU, 4)}"        
+            pbar_val.set_description(description_val)
         
         acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
         IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , category_names)]
-        
         avrg_loss = total_loss / cnt
-        
-        description_valid = f"Valid #{epoch} Avg Loss: {round(avg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, mIoU: {round(mIoU, 4)}"        
-        pbar_valid.set_description(description_valid)
         
         print(f'IoU by class : {IoU_by_class}')
         
@@ -285,23 +294,83 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
     return avrg_loss
 
 
-def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
-    if not cfg["KFOLD"]["TURN_ON"]:
-        criterion=get_criterion()
-        optimizer=get_optim(cfg, model)
+def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
+    kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
+    
+    train_dataset, val_dataset, _ = get_datasets(cfg, category_names)
+    batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
+    num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
+    
+    for fold, (train_ids, val_ids) in enumerate(kf.split(train_dataset)):
+    
+        print(f'FOLD - {fold+1}')
+        print('---------------------------------------------------------')
+
+        scaler = GradScaler()
+
+        train_subsampler = SubsetRandomSampler(train_ids)
+        val_subsampler = SubsetRandomSampler(val_ids)
+
+        train_dataloader = DataLoader(
+            dataset=train_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            collate_fn=collate_fn,
+            sampler=train_subsampler,
+            persistent_workers=True
+        )
+
+        val_dataloader = DataLoader(
+            dataset=train_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            collate_fn=collate_fn,
+            sampler=val_subsampler,
+            persistent_workers=True
+        )
+        
         train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
-                      model=model, 
-                      train_dataloader=train_dataloader, 
-                      val_dataloader=val_dataloader, 
-                      criterion=criterion, 
-                      optimizer=optimizer, 
-                      saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
-                      val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
-                      device=device,
-                      category_names=category_names,
-                      cfg=cfg)
-    # else:
-    #     # k-fold logic
+                  model=model, 
+                  train_dataloader=train_dataloader, 
+                  val_dataloader=val_dataloader, 
+                  criterion=criterion, 
+                  optimizer=optimizer, 
+                  saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                  val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+                  device=device,
+                  category_names=category_names,
+                  cfg=cfg,
+                  fold=fold)
+
+
+def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
+    criterion=get_criterion()
+    optimizer=get_optim(cfg, model)
+    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:    
+        train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+                  model=model, 
+                  train_dataloader=train_dataloader, 
+                  val_dataloader=val_dataloader, 
+                  criterion=criterion, 
+                  optimizer=optimizer, 
+                  saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                  val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+                  device=device,
+                  category_names=category_names,
+                  cfg=cfg)
+    else:
+        train_kfold(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+                    model=model, 
+                    train_dataloader=train_dataloader, 
+                    val_dataloader=val_dataloader, 
+                    criterion=criterion, 
+                    optimizer=optimizer, 
+                    saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                    val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
+                    device=device,
+                    category_names=category_names,
+                    cfg=cfg)
+        
     
     
 

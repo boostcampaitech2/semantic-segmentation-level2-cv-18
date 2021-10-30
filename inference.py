@@ -30,7 +30,7 @@ from util.ploting import (
     plot_examples
 )
 from train import (
-    get_trainable_model, get_file_name
+    get_trainable_model, get_model_file_name
 )
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -41,7 +41,8 @@ def get_trained_model(cfg, device):
     model = get_trainable_model(cfg)
     # best model 저장된 경로
     
-    model_path = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], get_file_name(cfg))
+    model_path = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
+                              get_model_file_name(cfg))
 
     # best model 불러오기
     checkpoint = torch.load(model_path, map_location=device)

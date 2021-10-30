@@ -63,7 +63,7 @@ SELECTED:
     FRAMEWORK: "segmentation_models_pytorch"
     MODEL_CFG:
         arch: "fpn"                 # DECODER
-        encoder_name: "efficientnet-b0" # ENCODER
+        encoder_name: "resnet18" # ENCODER
         encoder_weights: "imagenet"          # ENCODER 마다 쓸 수 있는 DATASET 이 달라서 확인하고 넣어야함.
         # pretrained: 'imagenet' # advpros 등
         in_channels: 3 # fixed
@@ -88,7 +88,7 @@ EXPERIMENTS:
     VAL_EVERY: 1
     
     KFOLD:
-        TURN_ON: False
+        TURN_ON: True
         NUM_FOLD: 5
     
     AUTOCAST_TURN_ON: True
@@ -98,7 +98,7 @@ EXPERIMENTS:
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "tqdm_test" # recommended to change
+            name: "kfold_train_test" # recommended to change
     
     
     SAVED_DIR: 
@@ -133,8 +133,8 @@ EXPERIMENTS:
 DATASET:
     PATH: "../segmentation/input/data"
     ANNS_FILE_NAME: "train_all.json"
-    # TRAIN_FILE_NAME: "train_all.json"
-    TRAIN_FILE_NAME: "val.json"
+    TRAIN_FILE_NAME: "train_all.json"
+    # TRAIN_FILE_NAME: "val.json"
     VAL_FILE_NAME: "val.json"
     TEST_FILE_NAME: "test.json"
     NUM_CLASSES: 11
