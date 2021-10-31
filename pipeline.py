@@ -18,7 +18,7 @@ import ttach as tta
 
 # IMPORT CUSTOM MODULES
 from util.ploting import (
-    plot_examples, plot_train_dist
+    plot_train_dist
 )
 from data.dataloader import (
     get_dataloaders

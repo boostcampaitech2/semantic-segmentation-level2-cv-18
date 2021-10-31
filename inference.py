@@ -106,7 +106,7 @@ def inference_one(model, test_dataloader, device, cfg):
                       mode="test", 
                       batch_id=0, 
                       num_examples=8, 
-                      dataloaer=test_dataloader)
+                      dataloader=test_dataloader)
     print("End prediction.")
     file_names = [y for x in file_name_list for y in x]
     
@@ -170,7 +170,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
                       mode="test", 
                       batch_id=0, 
                       num_examples=8, 
-                      dataloaer=test_dataloader)
+                      dataloader=test_dataloader)
     print("End prediction.")
     file_names = [y for x in file_name_list for y in x]
     

@@ -29,14 +29,14 @@ def infer(cfg, model, temp_images, device):
 
 
 def plot_examples(
-    model, cfg, device, mode:str=None, batch_id:int=0, num_examples:int=8, dataloaer=None
+    model, cfg, device, mode:str=None, batch_id:int=0, num_examples:int=8, dataloader=None
 ):
     """Visualization of images and masks according to batch size
     Args:
         mode: train/val/test (str)
         batch_id : 0 (int)
         num_examples : 1 ~ batch_size(e.g. 8) (int)
-        dataloaer : data_loader (dataloader)
+        dataloader : data_loader (dataloader)
     Returns:
         None
     """
@@ -59,7 +59,7 @@ def plot_examples(
     # test / validation set에 대한 시각화
     if mode in ("train", "val"):
         with torch.no_grad():
-            for index, (imgs, masks, image_infos) in enumerate(dataloaer):
+            for index, (imgs, masks, image_infos) in enumerate(dataloader):
                 if index == batch_id:
                     image_infos = image_infos
                     temp_images = imgs
@@ -109,7 +109,7 @@ def plot_examples(
     # test set에 대한 시각화
     else:
         with torch.no_grad():
-            for index, (imgs, image_infos) in enumerate(dataloaer):
+            for index, (imgs, image_infos) in enumerate(dataloader):
                 if index == batch_id:
                     image_infos = image_infos
                     temp_images = imgs

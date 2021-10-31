@@ -43,7 +43,13 @@ ENCODER_AVAILABLE: ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'
 
 
 CRITERION_AVAILABLE:
-    PYTORCH: ["CrossEntropy"]
+    # framework: [avaliable criterions]
+    torch.nn: ["CrossEntropy"]
+    pytorch_toolbelt: ["BalancedBCEWithLogitsLoss", "BiTemperedLogisticLoss", "BinaryBiTemperedLogisticLoss", 
+                       "DiceLoss", "FocalCosineLoss", "BinaryFocalLoss", "FocalLoss", "JaccardLoss", "JointLoss", 
+                       "WeightedLoss", "BinaryLovaszLoss", "LovaszLoss", "SoftBCEWithLogitsLoss", 
+                       "SoftCrossEntropyLoss", "BinarySoftF1Loss", "SoftF1Loss", "WingLoss"]
+    
     
 OPTIMIZER_AVAILABLE:
     PYTORCH: ["Adam", "AdamW", "SGD"]
@@ -69,20 +75,20 @@ SELECTED:
         in_channels: 3 # fixed
         classes: 11    # fixed
     
-    CRITERION: "CrossEntropy"
-    CRITERION_CFG:
-        label_smoothing: 0.0
+    # CRITERION: 
+    #     FRAMEWORK: "pytorch_toolbelt"
+    #     SELECT: "SoftCrossEntropyLoss"
         
-    OPTIMIZER: "Adam"
-    OPTIMIZER_CFG:
-        weight_decay: 1e-6
+    # OPTIMIZER: "Adam"
+    # OPTIMIZER_CFG:
+    #     weight_decay: 1e-6
 
 
 SEED: 21
 
 EXPERIMENTS:
     NUM_EPOCHS: 1
-    BATCH_SIZE: 16
+    BATCH_SIZE: 8
     LEARNING_RATE: 1e-4
     NUM_WORKERS: 4
     VAL_EVERY: 1
@@ -98,7 +104,7 @@ EXPERIMENTS:
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "kfold_train_test" # recommended to change
+            name: "scaler_optim_loss_train_test" # recommended to change
     
     
     SAVED_DIR: 

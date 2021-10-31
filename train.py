@@ -12,6 +12,14 @@ from torch.cuda.amp import autocast, GradScaler
 import torchvision
 import segmentation_models_pytorch as smp
 
+# criterion
+from pytorch_toolbelt import losses as L
+# optimizer
+from madgrad import MADGRAD
+# scheduler
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+
+
 # Fold를 위한 라이브러리
 from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
@@ -156,21 +164,45 @@ def get_model_file_name(cfg, fold:int=None):
     saved_model_file += ".pt"
     return saved_model_file
    
+
+def get_scaler():
+    return GradScaler()
+    
     
 def get_criterion():
-    return nn.CrossEntropyLoss()
+    return L.SoftCrossEntropyLoss()
 
 
 def get_optim(cfg, model):
-    return torch.optim.Adam(params = model.parameters(), 
-                            lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
-                            weight_decay=1e-6)
+    return MADGRAD(params = model.parameters(), 
+                   lr=cfg["EXPERIMENTS"]["LEARNING_RATE"], 
+                   weight_decay=1e-6)
+
+
+def get_scheduler(cfg, optimizer):
+    return CosineAnnealingWarmRestarts(optimizer, 
+                                       T_0=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
+                                       T_mult=1)
     
     
-def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg, fold:int=None):
+def train_one(num_epochs, 
+              model, 
+              train_dataloader, 
+              val_dataloader, 
+              criterion, 
+              optimizer, 
+              scheduler,
+              scaler,
+              saved_dir, 
+              val_every, 
+              device, 
+              category_names, 
+              cfg, 
+              fold:int=None):
+    
     print(f'Start training ...')
     n_class = 11
-    best_loss = 9999999
+    best_mIoU = 0.0
     
     # WandB watch model.
     if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
@@ -192,9 +224,15 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
             model, outputs, loss = calc_loss(cfg, model, images, masks, criterion, device)
             
             train_avg_loss += loss.item() / len(masks)
+            
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            
+            # optimizer.zero_grad()
+            # loss.backward()
+            # optimizer.step()
             
             outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
             masks = masks.detach().cpu().numpy()
@@ -203,18 +241,17 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
             acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
             train_avg_mIoU += mIoU
             
-            
             description_train = f"# epoch : {epoch + 1}  Loss: {round(loss.item(),4)}   mIoU: {round(mIoU,4)}"
             pbar_train.set_description(description_train)
             
-             
+        scheduler.step()
         # validation 주기에 따른 loss 출력 및 best model 저장
         if (epoch + 1) % val_every == 0:
-            avrg_loss = validation(epoch + 1, model, val_dataloader, criterion, device, category_names, cfg)
-            if avrg_loss < best_loss:
-                print(f"Best performance at epoch: {epoch + 1}")
+            mIoU = validation(epoch + 1, model, val_dataloader, criterion, device, category_names, cfg)
+            if mIoU > best_mIoU:
+                print(f"Best performance at epoch: {epoch + 1}, Best mIoU: {round(best_mIoU, 4)} --> {round(mIoU, 4)}")
                 print(f"Save model in {saved_dir}")
-                best_loss = avrg_loss
+                best_mIoU = mIoU
                 
                 save_model(model, saved_dir, file_name=get_model_file_name(cfg, fold))
                 print()
@@ -231,12 +268,20 @@ def train_one(num_epochs, model, train_dataloader, val_dataloader, criterion, op
                           mode="train", 
                           batch_id=0, 
                           num_examples=8, 
-                          dataloaer=train_dataloader)
+                          dataloader=train_dataloader)
             
     print("End of train\n")
             
 
-def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg, fold:int=None):
+def validation(epoch, 
+               model, 
+               val_dataloader, 
+               criterion, 
+               device, 
+               category_names, 
+               cfg, 
+               fold:int=None):
+    
     print(f'Start validation ...')
     
     model.eval()
@@ -289,12 +334,24 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
                           mode="val", 
                           batch_id=0, 
                           num_examples=8, 
-                          dataloaer=val_dataloader)
+                          dataloader=val_dataloader)
 
-    return avrg_loss
+    return mIoU
 
 
-def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
+def train_kfold(num_epochs, 
+                model, 
+                train_dataloader, 
+                val_dataloader, 
+                criterion, 
+                optimizer, 
+                scheduler, 
+                scaler,
+                saved_dir, 
+                val_every, 
+                device, 
+                category_names, 
+                cfg):
     kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
     
     train_dataset, _, _ = get_datasets(cfg, category_names)
@@ -305,8 +362,6 @@ def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, 
     
         print(f'FOLD - {fold+1}')
         print('---------------------------------------------------------')
-
-        scaler = GradScaler()
 
         train_subsampler = SubsetRandomSampler(train_ids)
         val_subsampler = SubsetRandomSampler(val_ids)
@@ -335,6 +390,8 @@ def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, 
                   val_dataloader=val_dataloader, 
                   criterion=criterion, 
                   optimizer=optimizer, 
+                  scheduler=scheduler,
+                  scaler=scaler,
                   saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
                   val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
                   device=device,
@@ -344,8 +401,11 @@ def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, 
 
 
 def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
-    criterion=get_criterion()
-    optimizer=get_optim(cfg, model)
+    scaler = get_scaler()
+    criterion = get_criterion()
+    optimizer = get_optim(cfg, model)
+    scheduler = get_scheduler(cfg, optimizer)
+    
     if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:    
         train_one(num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"], 
                   model=model, 
@@ -353,6 +413,8 @@ def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
                   val_dataloader=val_dataloader, 
                   criterion=criterion, 
                   optimizer=optimizer, 
+                  scheduler=scheduler,
+                  scaler=scaler,
                   saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
                   val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
                   device=device,
@@ -365,6 +427,8 @@ def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
                     val_dataloader=val_dataloader, 
                     criterion=criterion, 
                     optimizer=optimizer, 
+                    scheduler=scheduler,
+                    scaler=scaler,
                     saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"], 
                     val_every=cfg["EXPERIMENTS"]["VAL_EVERY"], 
                     device=device,

@@ -41,8 +41,6 @@ def get_cfg_from(args):
     
     if cfg["EXPERIMENTS"]["LEARNING_RATE"]:
         cfg["EXPERIMENTS"]["LEARNING_RATE"] = float(cfg["EXPERIMENTS"]["LEARNING_RATE"])
-    if cfg["SELECTED"]["OPTIMIZER_CFG"]["weight_decay"]:
-        cfg["SELECTED"]["OPTIMIZER_CFG"]["weight_decay"] = float(cfg["SELECTED"]["OPTIMIZER_CFG"]["weight_decay"])
     
     if not os.path.exists(cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"]):
         os.mkdir(cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"])
