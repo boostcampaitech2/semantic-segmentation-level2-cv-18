@@ -297,7 +297,7 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
 def train_kfold(num_epochs, model, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device, category_names, cfg):
     kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
     
-    train_dataset, val_dataset, _ = get_datasets(cfg, category_names)
+    train_dataset, _, _ = get_datasets(cfg, category_names)
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
     
@@ -372,8 +372,6 @@ def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
                     cfg=cfg)
         
     
-    
-
 def main():
     cfg = get_cfg_from(get_args())
     fix_seed_as(cfg["SEED"])
