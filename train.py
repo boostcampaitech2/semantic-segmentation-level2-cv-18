@@ -184,9 +184,9 @@ def get_criterion():
     selected_criterion = cfg["SELECTED"]["CRITERION"]["USE"]
     selected_criterion_cfg = cfg["SELECTED"]["CRITERION"]["CFG"]
     
-    if selected_criterion_framework == "torch.nn"
+    if selected_criterion_framework == "torch.nn":
         Creterion = getattr(nn, selected_criterion)
-    elif selected_criterion_framework == "pytorch_toolbelt"
+    elif selected_criterion_framework == "pytorch_toolbelt":
         Creterion = getattr(L, selected_criterion)
     
     assert(Creterion is not None)
