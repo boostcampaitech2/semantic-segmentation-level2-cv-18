@@ -147,7 +147,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
                 final_outs = outs if final_outs is None else final_outs + outs
             
             final_outs = F.softmax(final_outs, dim=1)
-            oms = torch.argmax(outs.squeeze(), dim=1).detach().cpu().numpy()
+            oms = torch.argmax(final_outs.squeeze(), dim=1).detach().cpu().numpy()
             
             # resize (256 x 256)
             temp_mask = []

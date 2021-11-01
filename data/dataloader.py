@@ -62,3 +62,18 @@ def get_dataloaders(cfg, category_names):
                                  collate_fn=collate_fn)
     
     return [train_dataloader, val_dataloader, test_dataloader]
+
+
+def get_val_dataset_for_kfold(cfg, category_names):
+    _, val_trans, _ = get_transforms(cfg)
+    
+    dataset_path = cfg["DATASET"]["PATH"]
+    val_path = os.path.join(dataset_path, cfg["DATASET"]["VAL_FILE_NAME"])
+    
+    val_dataset = CustomDataSet(data_dir=val_path, 
+                                mode='val',
+                                cfg=cfg,
+                                transform=val_trans,
+                                category_names=category_names)
+    return val_dataset
+

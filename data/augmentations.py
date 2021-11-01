@@ -7,7 +7,7 @@ def get_transforms(cfg):
     cfg_test_n_val_trans = cfg["EXPERIMENTS"]["TEST_n_VAL_TRANS"]
     
     train_trans = A.Compose([
-        A.OneOf([getattr(A, trans)(**config) for trans, config in cfg_train_trans.items()]),
+        A.OneOf([getattr(A, trans)(**config) for trans, config in cfg_train_trans.items()], p=1.0),
         ToTensorV2()
     ]) if cfg_train_trans is not None else A.Compose([ToTensorV2()])
     

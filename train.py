@@ -39,7 +39,7 @@ from util.eda import (
 )
 
 from data.dataloader import (
-    get_dataloaders, get_datasets, collate_fn
+    get_dataloaders, get_datasets, collate_fn, get_val_dataset_for_kfold
 )
 
 from config.read_config import (
@@ -355,6 +355,7 @@ def train_kfold(num_epochs,
     kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
     
     train_dataset, _, _ = get_datasets(cfg, category_names)
+    val_dataset = get_val_dataset_for_kfold(cfg, category_names)
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
     
