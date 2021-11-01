@@ -1,6 +1,7 @@
 import os
 from tqdm import tqdm
 from pprint import pprint
+from functools import reduce
 import warnings 
 warnings.filterwarnings('ignore')
 
@@ -32,6 +33,9 @@ from util.eda import (
 from util.ploting import (
     plot_examples
 )
+from util.tta import (
+    get_tta_list
+)
 
 from train import (
     get_trainable_model, get_model_file_name, get_model_inference
@@ -41,6 +45,20 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 
+def get_model_inference_considered_tta(cfg, model, images):
+    
+    frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+    outputs = get_model_inference(cfg, model, images)
+    if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
+        dict_a_tta2transformed_images = {a_tta : a_tta(images) for a_tta in tta_list}
+        
+        for a_tta, transformed_images in dict_a_tta2transformed_images.items():
+            tta_outputs = a_tta(get_model_inference(cfg, model, transformed_images))
+            outputs += tta_outputs
+    
+    return outputs
+    
+    
 def get_trained_model(cfg, device, fold:int=None):
     model = get_trainable_model(cfg)
     # best model 저장된 경로
@@ -80,14 +98,9 @@ def inference_one(model, test_dataloader, device, cfg):
     
     with torch.no_grad():
         for step, (imgs, image_infos) in enumerate(tqdm(test_dataloader)):
-            
-            
+                
             # inference (512 x 512)
-            outs = get_model_inference(cfg, model, torch.stack(imgs).to(device))
-            # if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
-            #     outs = model(torch.stack(imgs).to(device))['out']
-            # elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
-            #     outs = model(torch.stack(imgs).to(device))
+            outs = get_model_inference_considered_tta(cfg, model, torch.stack(imgs).to(device))
             oms = torch.argmax(outs.squeeze(), dim=1).detach().cpu().numpy()
             
             # resize (256 x 256)
@@ -122,7 +135,7 @@ def inference_one(model, test_dataloader, device, cfg):
 def inference_kfold(models, test_dataloader, device, cfg):
     """By using trained model, infer all images in test_dataloader
     Args:
-        models: Several trained models
+        models: A list of several trained models
         test_dataloader : DataLoader
         device: inference place
         
@@ -145,11 +158,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
             for model in models:
                 model = model.to(device)
                 model.eval()
-                outs = get_model_inference(cfg, model, torch.stack(imgs).to(device))
-                # if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
-                #     outs = model(torch.stack(imgs).to(device))['out']
-                # elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
-                #     outs = model(torch.stack(imgs).to(device))
+                outs = get_model_inference_considered_tta(cfg, model, torch.stack(imgs).to(device))
                 final_outs = outs if final_outs is None else final_outs + outs
             
             final_outs = F.softmax(final_outs, dim=1)
@@ -206,9 +215,8 @@ def inference(test_dataloader, device, cfg):
                                test_dataloader, 
                                device, 
                                cfg)
-        
-        
-    
+
+
 def get_submission_file_name(cfg):
     submission_file = ""
     seleceted_framework = cfg["SELECTED"]["FRAMEWORK"]
@@ -224,7 +232,7 @@ def get_submission_file_name(cfg):
                                        "_".join([arch_name, enc_name, enc_weights_name]))
     
     if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
-        submission_file += "_kfold"
+        submission_file += f"_{cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"]}fold"
     
     submission_file += ".csv"
     return submission_file
@@ -278,3 +286,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -61,10 +61,10 @@ def is_same_width(t1, t2):
 def is_same_height(t1, t2):
     return t1.shape[-1] == t2.size(-1)
 
-    
+
 def get_model_inference(cfg, model, images):
-    """"""
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+    
     # inference
     if frame_selected == "torchvision": 
         outputs = model(images)['out']
@@ -72,7 +72,7 @@ def get_model_inference(cfg, model, images):
         outputs = model(images)
     
     return outputs
-    
+
 
 def simple_check(cfg, model):
     """구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test"""
@@ -142,14 +142,14 @@ def calc_loss(cfg, model, images, masks, criterion, device):
             # device 할당
             model = model.to(device)
             # inference
-            outputs = get_model_inference(cfg, model, images)
+            outputs = get_model_inference_with_tta(cfg, model, images)
             # loss 계산 (cross entropy loss)
             loss = criterion(outputs, masks)
     else:
         # device 할당
         model = model.to(device)
         # inference
-        outputs = get_model_inference(cfg, model, images)
+        outputs = get_model_inference_with_tta(cfg, model, images)
         # loss 계산 (cross entropy loss)
         loss = criterion(outputs, masks)
     
@@ -250,10 +250,6 @@ def train_one(num_epochs,
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
-            
-            # optimizer.zero_grad()
-            # loss.backward()
-            # optimizer.step()
             
             outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
             masks = masks.detach().cpu().numpy()
@@ -484,4 +480,4 @@ def main():
         
 if __name__ == "__main__":
     main()
-    
+

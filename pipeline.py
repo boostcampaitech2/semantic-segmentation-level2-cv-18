@@ -2,13 +2,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import torch
-import torch.nn as nn # criterion, optimizer 모듈화 끝나면 삭제 가능
+import torch.nn as nn
 
 
 from pprint import pprint
-
-# For TTA
-import ttach as tta
 
 # IMPORT CUSTOM MODULES
 from util.ploting import (
