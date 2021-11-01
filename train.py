@@ -72,7 +72,18 @@ def simple_check(cfg, model):
     assert(is_same_width(x, out) and is_same_height(x, out))
     assert(out.size(-3) == cfg["DATASET"]["NUM_CLASSES"])
 
-
+    
+def get_model_inference(cfg, model, images):
+    frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+    # inference
+    if frame_selected == "torchvision": 
+        outputs = model(images)['out']
+    elif frame_selected == "segmentation_models_pytorch": 
+        outputs = model(images)
+    
+    return outputs
+    
+    
 def set_torchvision_model(cfg, model):
     num_classes = cfg["DATASET"]["NUM_CLASSES"]
     model_selected = cfg["SELECTED"]["MODEL"]
@@ -119,6 +130,7 @@ def save_model(model, saved_dir, file_name):
     torch.save(model, output_path)
     
     
+    
 def calc_loss(cfg, model, images, masks, criterion, device):
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
     if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
@@ -126,20 +138,14 @@ def calc_loss(cfg, model, images, masks, criterion, device):
             # device 할당
             model = model.to(device)
             # inference
-            if frame_selected == "torchvision": 
-                outputs = model(images)['out']
-            elif frame_selected == "segmentation_models_pytorch": 
-                outputs = model(images)
+            outputs = get_model_inference(cfg, model, images)
             # loss 계산 (cross entropy loss)
             loss = criterion(outputs, masks)
     else:
         # device 할당
         model = model.to(device)
         # inference
-        if frame_selected == "torchvision":
-            outputs = model(images)['out']
-        elif frame_selected == "segmentation_models_pytorch":
-            outputs = model(images)
+        outputs = get_model_inference(cfg, model, images)
         # loss 계산 (cross entropy loss)
         loss = criterion(outputs, masks)
     
@@ -267,7 +273,7 @@ def train_one(num_epochs,
                           device=device,
                           mode="train", 
                           batch_id=0, 
-                          num_examples=8, 
+                          num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
                           dataloader=train_dataloader)
             
     print("End of train\n")
@@ -333,7 +339,7 @@ def validation(epoch,
                           device=device,
                           mode="val", 
                           batch_id=0, 
-                          num_examples=8, 
+                          num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
                           dataloader=val_dataloader)
 
     return mIoU

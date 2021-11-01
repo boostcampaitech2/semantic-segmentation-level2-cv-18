@@ -31,7 +31,7 @@ from util.ploting import (
     plot_examples
 )
 from train import (
-    get_trainable_model, get_model_file_name
+    get_trainable_model, get_model_file_name, get_model_inference
 )
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -78,11 +78,13 @@ def inference_one(model, test_dataloader, device, cfg):
     with torch.no_grad():
         for step, (imgs, image_infos) in enumerate(tqdm(test_dataloader)):
             
+            
             # inference (512 x 512)
-            if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
-                outs = model(torch.stack(imgs).to(device))['out']
-            elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
-                outs = model(torch.stack(imgs).to(device))
+            outs = get_model_inference(cfg, model, torch.stack(imgs).to(device))
+            # if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+            #     outs = model(torch.stack(imgs).to(device))['out']
+            # elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+            #     outs = model(torch.stack(imgs).to(device))
             oms = torch.argmax(outs.squeeze(), dim=1).detach().cpu().numpy()
             
             # resize (256 x 256)
@@ -105,7 +107,7 @@ def inference_one(model, test_dataloader, device, cfg):
                       device=device,
                       mode="test", 
                       batch_id=0, 
-                      num_examples=8, 
+                      num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
                       dataloader=test_dataloader)
     print("End prediction.")
     file_names = [y for x in file_name_list for y in x]
@@ -140,10 +142,11 @@ def inference_kfold(models, test_dataloader, device, cfg):
             for model in models:
                 model = model.to(device)
                 model.eval()
-                if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
-                    outs = model(torch.stack(imgs).to(device))['out']
-                elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
-                    outs = model(torch.stack(imgs).to(device))
+                outs = get_model_inference(cfg, model, torch.stack(imgs).to(device))
+                # if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+                #     outs = model(torch.stack(imgs).to(device))['out']
+                # elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+                #     outs = model(torch.stack(imgs).to(device))
                 final_outs = outs if final_outs is None else final_outs + outs
             
             final_outs = F.softmax(final_outs, dim=1)
@@ -169,7 +172,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
                       device=device,
                       mode="test", 
                       batch_id=0, 
-                      num_examples=8, 
+                      num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"], 
                       dataloader=test_dataloader)
     print("End prediction.")
     file_names = [y for x in file_name_list for y in x]
