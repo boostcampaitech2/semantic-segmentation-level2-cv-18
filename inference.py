@@ -221,7 +221,7 @@ def get_submission_file_name(cfg):
         enc_name = cfg['SELECTED']['MODEL_CFG']['encoder_name']
         enc_weights_name = cfg['SELECTED']['MODEL_CFG']['encoder_weights']
         submission_file = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["SUBMISSION"], 
-                                       "_".join([arch_name, enc_name, enc_weights_name])")
+                                       "_".join([arch_name, enc_name, enc_weights_name]))
     
     if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
         submission_file += "_kfold"
