@@ -1,7 +1,7 @@
-# Recommended not to change
+# Recommended not to change, use it for copy-paste
 FRAMEWORKS_AVAILABLE: ["torchvision", "segmentation_models_pytorch"]
 
-# Recommended not to change
+# Recommended not to change, use it for copy-paste
 MODELS_AVAILABLE:
     torchvision: ["fcn_resnet50",
                   "fcn_resnet101",
@@ -10,13 +10,13 @@ MODELS_AVAILABLE:
                   "deeplabv3_mobilenet_v3_large",
                   "lraspp_mobilenet_v3_large"]
                   
-# Recommended not to change                  
+# Recommended not to change, use it for copy-paste
 DECODER_AVAILABLE: ["unet", "unetplusplus", 
                     "manet", "linknet", 
                     "fpn", "pspnet", 
                     "deeplabv3", "deeplabv3plus", "pan"]
 
-# Recommended not to change
+# Recommended not to change, use it for copy-paste
 ENCODER_AVAILABLE: ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 
                     'resnext50_32x4d', 'resnext101_32x4d', 'resnext101_32x8d', 'resnext101_32x16d', 'resnext101_32x32d', 'resnext101_32x48d', 
                     'dpn68', 'dpn68b', 'dpn92', 'dpn98', 'dpn107', 'dpn131', 
@@ -70,8 +70,9 @@ SELECTED:
     # MODEL_CFG:
     #     arch: "fpn"                 # DECODER
     #     encoder_name: "timm-efficientnet-b6" # ENCODER
-    #     encoder_weights: "noisy-student"          # ENCODER 마다 쓸 수 있는 DATASET 이 달라서 확인하고 넣어야함.  (https://smp.readthedocs.io/en/latest/encoders.html)
-    #                                          # ("imagenet", "advpros", "noisy-student")
+    #     encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
+    #                                          # (https://smp.readthedocs.io/en/latest/encoders.html)
+    #                                          # ("imagenet", "advpros", "noisy-student" 등)
     #     in_channels: 3 # fixed
     #     classes: 11    # fixed
     
@@ -87,8 +88,8 @@ SELECTED:
 SEED: 21
 
 EXPERIMENTS:
-    NUM_EPOCHS: 24
-    BATCH_SIZE: 8
+    NUM_EPOCHS: 1
+    BATCH_SIZE: 2
     LEARNING_RATE: 1e-4
     NUM_WORKERS: 4
     VAL_EVERY: 1
@@ -100,11 +101,11 @@ EXPERIMENTS:
     AUTOCAST_TURN_ON: True
     
     WNB:
-        TURN_ON: True
+        TURN_ON: False
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "lraspp_mobilenet_v3_large_211101_11h" # recommended to change
+            name: "test" # recommended to change if wnb is turn-on.
     
     
     SAVED_DIR: 
@@ -139,9 +140,9 @@ EXPERIMENTS:
 DATASET:
     PATH: "../segmentation/input/data"
     ANNS_FILE_NAME: "train_all.json"
-    TRAIN_FILE_NAME: "train_all.json"
-    # TRAIN_FILE_NAME: "val.json"
-    VAL_FILE_NAME: "val.json"
+    # TRAIN_FILE_NAME: "train_all.json"
+    TRAIN_FILE_NAME: "val.json"
+    VAL_FILE_NAME: "val.json" # not used if you set "KFOLD TURN ON - True".
     TEST_FILE_NAME: "test.json"
     NUM_CLASSES: 11
 
