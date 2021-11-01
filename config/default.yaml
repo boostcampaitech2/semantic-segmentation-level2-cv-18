@@ -41,7 +41,7 @@ ENCODER_AVAILABLE: ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'
                     'timm-mobilenetv3_small_075', 'timm-mobilenetv3_small_100', 'timm-mobilenetv3_small_minimal_100', 
                     'timm-gernet_s', 'timm-gernet_m', 'timm-gernet_l']
 
-
+# Recommended not to change, use it for copy-paste
 CRITERION_AVAILABLE:
     # available_framework: [avaliable criterions]
     torch.nn: ["CrossEntropy"]
@@ -51,8 +51,8 @@ CRITERION_AVAILABLE:
                        "SoftCrossEntropyLoss", "BinarySoftF1Loss", "SoftF1Loss", "WingLoss"]
     
     
-OPTIMIZER_AVAILABLE:
-    PYTORCH: ["Adam", "AdamW", "SGD"]
+# OPTIMIZER_AVAILABLE:
+#     PYTORCH: ["Adam", "AdamW", "SGD"]
 
 
 SELECTED:
