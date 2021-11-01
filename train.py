@@ -61,19 +61,9 @@ def is_same_width(t1, t2):
 def is_same_height(t1, t2):
     return t1.shape[-1] == t2.size(-1)
 
-def simple_check(cfg, model):
-    # 구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test
-    x = torch.randn([2, 3, 512, 512])
-    if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
-        out = model(x)['out']
-    elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
-        out = model(x)
-    
-    assert(is_same_width(x, out) and is_same_height(x, out))
-    assert(out.size(-3) == cfg["DATASET"]["NUM_CLASSES"])
-
     
 def get_model_inference(cfg, model, images):
+    """"""
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
     # inference
     if frame_selected == "torchvision": 
@@ -82,6 +72,19 @@ def get_model_inference(cfg, model, images):
         outputs = model(images)
     
     return outputs
+    
+
+def simple_check(cfg, model):
+    """구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test"""
+    x = torch.randn([2, 3, 512, 512])
+    
+    if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+        out = model(x)['out']
+    elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+        out = model(x)
+    
+    assert(is_same_width(x, out) and is_same_height(x, out))
+    assert(out.size(-3) == cfg["DATASET"]["NUM_CLASSES"])
     
     
 def set_torchvision_model(cfg, model):
@@ -113,7 +116,8 @@ def get_trainable_model(cfg):
     
     if frame_selected == "torchvision":
         model_selected = cfg_selected["MODEL"]
-        model = getattr(torchvision.models.segmentation, model_selected)(**cfg_selected["MODEL_CFG"])
+        Model = getattr(torchvision.models.segmentation, model_selected)
+        model = Model(**cfg_selected["MODEL_CFG"])
         model = set_torchvision_model(cfg, model)
     elif frame_selected == "segmentation_models_pytorch":
         model = smp.create_model(**cfg_selected["MODEL_CFG"])
@@ -176,7 +180,18 @@ def get_scaler():
     
     
 def get_criterion():
-    return L.SoftCrossEntropyLoss()
+    selected_criterion_framework = cfg["SELECTED"]["CRITERION"]["FRAMEWORK"]
+    selected_criterion = cfg["SELECTED"]["CRITERION"]["USE"]
+    selected_criterion_cfg = cfg["SELECTED"]["CRITERION"]["CFG"]
+    
+    if selected_criterion_framework == "torch.nn"
+        Creterion = getattr(nn, selected_criterion)
+    elif selected_criterion_framework == "pytorch_toolbelt"
+        Creterion = getattr(L, selected_criterion)
+    
+    assert(Creterion is not None)
+    creterion = Creterion() if selected_criterion_cfg is None else Creterion(**selected_criterion_cfg)
+    return creterion
 
 
 def get_optim(cfg, model):

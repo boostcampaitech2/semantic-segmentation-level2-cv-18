@@ -43,7 +43,7 @@ ENCODER_AVAILABLE: ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'
 
 
 CRITERION_AVAILABLE:
-    # framework: [avaliable criterions]
+    # available_framework: [avaliable criterions]
     torch.nn: ["CrossEntropy"]
     pytorch_toolbelt: ["BalancedBCEWithLogitsLoss", "BiTemperedLogisticLoss", "BinaryBiTemperedLogisticLoss", 
                        "DiceLoss", "FocalCosineLoss", "BinaryFocalLoss", "FocalLoss", "JaccardLoss", "JointLoss", 
@@ -76,9 +76,10 @@ SELECTED:
     #     in_channels: 3 # fixed
     #     classes: 11    # fixed
     
-    # CRITERION: 
-    #     FRAMEWORK: "pytorch_toolbelt"
-    #     SELECT: "SoftCrossEntropyLoss"
+    CRITERION: 
+        FRAMEWORK: "pytorch_toolbelt"
+        USE: "SoftCrossEntropyLoss"
+        CFG:
         
     # OPTIMIZER: "Adam"
     # OPTIMIZER_CFG:
@@ -140,8 +141,8 @@ EXPERIMENTS:
 DATASET:
     PATH: "../segmentation/input/data"
     ANNS_FILE_NAME: "train_all.json"
-    # TRAIN_FILE_NAME: "train_all.json"
-    TRAIN_FILE_NAME: "val.json"
+    TRAIN_FILE_NAME: "train_all.json"
+    # TRAIN_FILE_NAME: "val.json"
     VAL_FILE_NAME: "val.json" # not used if you set "KFOLD TURN ON - True".
     TEST_FILE_NAME: "test.json"
     NUM_CLASSES: 11

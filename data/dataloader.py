@@ -12,6 +12,7 @@ def collate_fn(batch):
 
 
 def get_datasets(cfg, category_names):
+    """Get train/val/test datasets from configs."""
     train_trans, val_trans, test_trans = get_transforms(cfg)
     
     dataset_path = cfg["DATASET"]["PATH"]
@@ -40,6 +41,7 @@ def get_datasets(cfg, category_names):
     
     
 def get_dataloaders(cfg, category_names):
+    """Get train/val/test data loaders from configs."""
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
     
@@ -65,6 +67,7 @@ def get_dataloaders(cfg, category_names):
 
 
 def get_val_dataset_for_kfold(cfg, category_names):
+    """Get val dataset applying train transforms."""
     _, val_trans, _ = get_transforms(cfg)
     
     dataset_path = cfg["DATASET"]["PATH"]

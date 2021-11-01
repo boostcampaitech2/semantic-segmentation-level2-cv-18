@@ -3,6 +3,7 @@ from albumentations.pytorch import ToTensorV2
 
 
 def get_transforms(cfg):
+    """Get train/val/test transforms."""
     cfg_train_trans = cfg["EXPERIMENTS"]["TRAIN_TRANS"]
     cfg_test_n_val_trans = cfg["EXPERIMENTS"]["TEST_n_VAL_TRANS"]
     

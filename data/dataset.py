@@ -14,11 +14,11 @@ def get_classname(classID, categories):
         if categoty['id'] == classID:
             return categoty['name']
     return "None"
-    
+
 
 class CustomDataSet(Dataset):
     """COCO format"""
-    def __init__(self, data_dir, category_names, cfg, mode='train', transform=None):
+    def __init__(self, data_dir, category_names, cfg, mode:str='train', transform=None):
         super(CustomDataSet, self).__init__()
         self.mode = mode
         self.transform = transform

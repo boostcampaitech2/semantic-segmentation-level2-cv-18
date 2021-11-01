@@ -48,7 +48,6 @@ if __name__ == "__main__":
     cfg = get_cfg_from(get_args())
     fix_seed_as(cfg["SEED"])
     
-    
     wnb_run = wnb_init(cfg)
     print_ver_n_settings()
     eda(cfg)
