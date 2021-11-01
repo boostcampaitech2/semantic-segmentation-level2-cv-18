@@ -179,7 +179,7 @@ def get_scaler():
     return GradScaler()
     
     
-def get_criterion():
+def get_criterion(cfg):
     selected_criterion_framework = cfg["SELECTED"]["CRITERION"]["FRAMEWORK"]
     selected_criterion = cfg["SELECTED"]["CRITERION"]["USE"]
     selected_criterion_cfg = cfg["SELECTED"]["CRITERION"]["CFG"]
@@ -424,7 +424,7 @@ def train_kfold(num_epochs,
 
 def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
     scaler = get_scaler()
-    criterion = get_criterion()
+    criterion = get_criterion(cfg)
     optimizer = get_optim(cfg, model)
     scheduler = get_scheduler(cfg, optimizer)
     
