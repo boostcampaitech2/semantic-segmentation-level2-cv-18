@@ -68,9 +68,9 @@ def get_val_dataset_for_kfold(cfg, category_names):
     _, val_trans, _ = get_transforms(cfg)
     
     dataset_path = cfg["DATASET"]["PATH"]
-    val_path = os.path.join(dataset_path, cfg["DATASET"]["VAL_FILE_NAME"])
+    train_path = os.path.join(dataset_path, cfg["DATASET"]["TRAIN_FILE_NAME"])
     
-    val_dataset = CustomDataSet(data_dir=val_path, 
+    val_dataset = CustomDataSet(data_dir=train_path, 
                                 mode='val',
                                 cfg=cfg,
                                 transform=val_trans,

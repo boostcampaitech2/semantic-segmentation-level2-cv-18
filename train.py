@@ -377,7 +377,7 @@ def train_kfold(num_epochs,
         )
 
         val_dataloader = DataLoader(
-            dataset=train_dataset,
+            dataset=val_dataset,
             batch_size=batch_size,
             num_workers=num_workers,
             collate_fn=collate_fn,
