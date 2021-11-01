@@ -14,18 +14,22 @@ import ttach as tta
 from util.ploting import (
     plot_train_dist
 )
-from data.dataloader import (
-    get_dataloaders
-)
-from train import (
-    train, get_trainable_model
-)
-from inference import (
-    create_submission, get_trained_model
-)
 from util.eda import (
     get_df_train_categories_counts, add_bg_index_to, eda
 )
+
+from data.dataloader import (
+    get_dataloaders
+)
+
+from train import (
+    train, get_trainable_model
+)
+
+from inference import (
+    create_submission, get_trained_model
+)
+
 from config.read_config import (
     print_ver_n_settings, get_cfg_from, get_args
 )
