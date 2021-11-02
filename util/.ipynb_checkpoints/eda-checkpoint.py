@@ -10,21 +10,23 @@ def get_df_train_categories_counts(cfg):
     train_file_path = os.path.join(dataset_path, cfg["DATASET"]["TRAIN_FILE_NAME"])
 
     # Read annotations
-    with open(train_file_path, 'r') as f:
+    with open(train_file_path, "r") as f:
         dataset = json.loads(f.read())
 
     df = pd.DataFrame(dataset["annotations"])
     df = df[["id", "category_id"]]
     df = df.groupby(by="category_id", as_index=False).count()
-    df["category_id"] = df["category_id"].apply(lambda x: dataset["categories"][x-1]["name"])
+    df["category_id"] = df["category_id"].apply(
+        lambda x: dataset["categories"][x - 1]["name"]
+    )
     df.columns = ["Categories", "Number of annotations"]
     df = df.sort_values(by="Number of annotations", ascending=False)
-    
+
     return df
 
 
 def add_bg_index_to(df):
-    # df 에 index(Background) 를 추가한다. 
+    # df 에 index(Background) 를 추가한다.
     df_target = pd.DataFrame(["Background"], columns=["Categories"])
     df_target = df_target.append(df)
     df_target = df_target.sort_index()
@@ -38,12 +40,12 @@ def eda(cfg):
     anns_file_path = os.path.join(dataset_path, cfg["DATASET"]["ANNS_FILE_NAME"])
 
     # Read annotations
-    with open(anns_file_path, 'r') as f:
+    with open(anns_file_path, "r") as f:
         dataset = json.loads(f.read())
 
-    categories = dataset['categories']
-    anns = dataset['annotations']
-    imgs = dataset['images']
+    categories = dataset["categories"]
+    anns = dataset["annotations"]
+    imgs = dataset["images"]
 
     df_categories = pd.DataFrame(categories)
 
@@ -52,10 +54,9 @@ def eda(cfg):
     num_annotations = len(anns)
     num_images = len(imgs)
 
-    print("-"*30)
-    print('Number of super categories:', num_super_categories)
-    print('Number of categories:', num_categories)
-    print('Number of annotations:', num_annotations)
-    print('Number of images:', num_images)
-    print("-"*30)
-    
+    print("-" * 30)
+    print("Number of super categories:", num_super_categories)
+    print("Number of categories:", num_categories)
+    print("Number of annotations:", num_annotations)
+    print("Number of images:", num_images)
+    print("-" * 30)
