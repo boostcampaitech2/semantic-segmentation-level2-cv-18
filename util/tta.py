@@ -25,7 +25,7 @@ def get_tta_list(cfg):
     return tta_list
 
 
-# for test
+# Only used for test.
 def main():
     cfg = {
         "EXPERIMENTS": {
@@ -42,6 +42,8 @@ def main():
     print(get_tta_list(cfg))
     return
 
+
+# Only used for test.
 if __name__ == "__main__":
     main()
 
