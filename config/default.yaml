@@ -82,11 +82,11 @@ SELECTED:
 SEED: 21
 
 EXPERIMENTS:
-    NUM_EPOCHS: 40
+    NUM_EPOCHS: 30
     BATCH_SIZE: 16
     LEARNING_RATE: 1e-4
     NUM_WORKERS: 4
-    VAL_EVERY: 4
+    VAL_EVERY: 3
     
     KFOLD:
         TURN_ON: True
@@ -95,11 +95,11 @@ EXPERIMENTS:
     AUTOCAST_TURN_ON: True
     
     WNB:
-        TURN_ON: False
+        TURN_ON: True
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "fpn_timm-efficientnet-b7_211101_19h" # recommended to change if wnb is turn-on.
+            name: "fpn_timm-efficientnet-b6_211102_13h" # recommended to change if wnb is turn-on.
     
     
     SAVED_DIR: 
@@ -116,12 +116,15 @@ EXPERIMENTS:
             height: 512
             width: 512
             p: 1.0
+        HorizontalFlip:
+            p: 1.0
+        VerticalFlip:
+            p: 1.0
         GridDropout:
             p: 1.0
         ElasticTransform:
             p: 1.0
-        HorizontalFlip:
-            p: 1.0
+        
     TEST_n_VAL_TRANS: # ToTensorV2 는 기본으로 들어가있음.
     
     TTA:

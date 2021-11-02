@@ -142,14 +142,14 @@ def calc_loss(cfg, model, images, masks, criterion, device):
             # device 할당
             model = model.to(device)
             # inference
-            outputs = get_model_inference_with_tta(cfg, model, images)
+            outputs = get_model_inference(cfg, model, images)
             # loss 계산 (cross entropy loss)
             loss = criterion(outputs, masks)
     else:
         # device 할당
         model = model.to(device)
         # inference
-        outputs = get_model_inference_with_tta(cfg, model, images)
+        outputs = get_model_inference(cfg, model, images)
         # loss 계산 (cross entropy loss)
         loss = criterion(outputs, masks)
     

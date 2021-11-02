@@ -9,6 +9,7 @@ def get_transforms(cfg):
     
     train_trans = A.Compose([
         A.OneOf([getattr(A, trans)(**config) for trans, config in cfg_train_trans.items()], p=1.0),
+        A.RandomRotate90(p=1.0),
         ToTensorV2()
     ]) if cfg_train_trans is not None else A.Compose([ToTensorV2()])
     

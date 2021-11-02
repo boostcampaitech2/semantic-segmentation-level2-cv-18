@@ -164,6 +164,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
                 
                 outs = get_model_inference_considered_tta(cfg, model, torch.stack(imgs).to(device))
                 final_outs = outs if final_outs is None else final_outs + outs
+            final_outs /= len(models)
             
             final_outs = F.softmax(final_outs, dim=1)
             oms = torch.argmax(final_outs.squeeze(), dim=1).detach().cpu().numpy()
