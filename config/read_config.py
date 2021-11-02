@@ -31,6 +31,7 @@ def get_args():
 
 def cfg_check(cfg):
     """Check the user's selection."""
+    
     selected_framework = cfg["SELECTED"]["FRAMEWORK"]
     assert(selected_framework in cfg["FRAMEWORKS_AVAILABLE"])
     
@@ -49,6 +50,9 @@ def cfg_check(cfg):
     tta_cfg = cfg["EXPERIMENTS"]["TTA"]
     if tta_cfg["TURN_ON"]:
         assert(any(tta_cfg["AVAILABLE_LIST"].values()))
+    
+    assert(cfg["EXPERIMENTS"]["LEARNING_RATE"] > 0)
+    assert(cfg["EXPERIMENTS"]["NUM_EPOCHS"] >= cfg["EXPERIMENTS"]["VAL_EVERY"])
     
     
 def get_cfg_from(args):
