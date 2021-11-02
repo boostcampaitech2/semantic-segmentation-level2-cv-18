@@ -200,14 +200,6 @@ def inference_kfold(models, test_dataloader, device, cfg):
 def inference(test_dataloader, device, cfg):
     if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
         model_trained = get_trained_model(cfg, DEVICE)
-    
-        if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
-            tta_cfg = cfg["EXPERIMENTS"]["TTA"]["CFG"]
-            tta_trans = tta.Compose([getattr(tta.transforms, trans)(**cfg) for trans, cfg in tta_cfg.items()])
-            model_trained = tta.SegmentationTTAWrapper(model=model_trained, 
-                                                       transforms=tta_trans,
-                                                       merge_mode="mean")
-            model_trained.to(DEVICE)
         
         return inference_one(model_trained, 
                              test_dataloader, 
