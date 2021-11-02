@@ -46,16 +46,19 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def get_model_inference_considered_tta(cfg, model, images):
-    
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
     outputs = get_model_inference(cfg, model, images)
+    
+    tta_list = get_tta_list(cfg)
     if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
         dict_a_tta2transformed_images = {a_tta : a_tta(images) for a_tta in tta_list}
         
         for a_tta, transformed_images in dict_a_tta2transformed_images.items():
             tta_outputs = a_tta(get_model_inference(cfg, model, transformed_images))
             outputs += tta_outputs
-    
+        
+        outputs /= len(dict_a_tta2transformed_images) + 1
+        
     return outputs
     
     
@@ -158,6 +161,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
             for model in models:
                 model = model.to(device)
                 model.eval()
+                
                 outs = get_model_inference_considered_tta(cfg, model, torch.stack(imgs).to(device))
                 final_outs = outs if final_outs is None else final_outs + outs
             
@@ -219,22 +223,29 @@ def inference(test_dataloader, device, cfg):
 
 def get_submission_file_name(cfg):
     submission_file = ""
+    file_name_components = []
     seleceted_framework = cfg["SELECTED"]["FRAMEWORK"]
     
     if seleceted_framework == "torchvision":
-        submission_file = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["SUBMISSION"], 
-                                       f"{cfg['SELECTED']['MODEL']}.csv")
+        file_name_components.append(cfg['SELECTED']['MODEL'])
+        
     elif seleceted_framework == "segmentation_models_pytorch":
         arch_name = cfg['SELECTED']['MODEL_CFG']['arch']
         enc_name = cfg['SELECTED']['MODEL_CFG']['encoder_name']
         enc_weights_name = cfg['SELECTED']['MODEL_CFG']['encoder_weights']
-        submission_file = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["SUBMISSION"], 
-                                       "_".join([arch_name, enc_name, enc_weights_name]))
-    
+        
+        file_name_components.append(arch_name)
+        file_name_components.append(enc_name)
+        file_name_components.append(enc_weights_name)
+        
     if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
-        submission_file += f"_{cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"]}fold"
+        file_name_components.append(f"{cfg['EXPERIMENTS']['KFOLD']['NUM_FOLD']}fold")
     
-    submission_file += ".csv"
+    if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
+        file_name_components.append("TTA")
+    
+    file_name = "_".join(file_name_components) + ".csv"
+    submission_file = os.path.join(cfg["EXPERIMENTS"]["SAVED_DIR"]["SUBMISSION"], file_name)
     return submission_file
     
 

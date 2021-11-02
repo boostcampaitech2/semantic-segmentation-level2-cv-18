@@ -48,7 +48,7 @@ def cfg_check(cfg):
     
     tta_cfg = cfg["EXPERIMENTS"]["TTA"]
     if tta_cfg["TURN_ON"]:
-        assert(any(tta_cfg["APPLY_LIST"].values()))
+        assert(any(tta_cfg["AVAILABLE_LIST"].values()))
     
     
 def get_cfg_from(args):

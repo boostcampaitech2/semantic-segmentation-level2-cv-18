@@ -65,7 +65,7 @@ SELECTED:
     FRAMEWORK: "segmentation_models_pytorch"
     MODEL_CFG:
         arch: "fpn"                 # DECODER
-        encoder_name: "timm-efficientnet-b7" # ENCODER
+        encoder_name: "timm-efficientnet-b6" # ENCODER
         encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
                                              # (https://smp.readthedocs.io/en/latest/encoders.html)
                                              # ("imagenet", "advpros", "noisy-student" 등)
@@ -95,7 +95,7 @@ EXPERIMENTS:
     AUTOCAST_TURN_ON: True
     
     WNB:
-        TURN_ON: True
+        TURN_ON: False
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
