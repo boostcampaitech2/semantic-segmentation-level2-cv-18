@@ -99,7 +99,7 @@ def inference_one(model, test_dataloader, device, cfg):
             
             file_name_list.append([i['file_name'] for i in image_infos])
     
-    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]: # wandb에 train된 image와 mask 업로드
         plot_examples(model=model,
                       cfg=cfg,
                       device=device,
@@ -163,7 +163,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
             
             file_name_list.append([i['file_name'] for i in image_infos])
     
-    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]: # wandb에 inference된 image와 mask 업로드
         plot_examples(model=model,
                       cfg=cfg,
                       device=device,
@@ -178,7 +178,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
     
     
 def inference(test_dataloader, device, cfg):
-    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
+    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]: # K-Flod 미적용
         model_trained = get_trained_model(cfg, DEVICE)
     
         if cfg["EXPERIMENTS"]["TTA"]["TURN_ON"]:
@@ -193,7 +193,7 @@ def inference(test_dataloader, device, cfg):
                              test_dataloader, 
                              device, 
                              cfg)
-    else:
+    else: # K-Flod 적용
         models_trained = [get_trained_model(cfg, DEVICE, fold) for fold in range(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"])]
             
         return inference_kfold(models_trained, 
@@ -202,7 +202,7 @@ def inference(test_dataloader, device, cfg):
                                cfg)
         
         
-    
+
 def get_submission_file_name(cfg):
     submission_file = ""
     seleceted_framework = cfg["SELECTED"]["FRAMEWORK"]
@@ -252,12 +252,15 @@ def main():
     print_ver_n_settings()
     pprint(cfg)
     
+    # 데이터 프레임 
     df_train_categories_counts = get_df_train_categories_counts(cfg)
     sorted_df_train_categories_counts = add_bg_index_to(df_train_categories_counts)
     category_names = sorted_df_train_categories_counts["Categories"].to_list()
     
+    # 테스트 데이터로더 불러오기
     _, _, test_dataloader = get_dataloaders(cfg, category_names)
     
+    # CSV 파일 생성
     create_submission(test_dataloader=test_dataloader, 
                       device=DEVICE,
                       cfg=cfg)
