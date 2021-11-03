@@ -55,25 +55,25 @@ KFOLD_TYPE_AVAILABLE: ["KFold", "MultilabelStratifiedKFold"]
 
 
 SELECTED:
-    # 1. IF you use torchvision model
-    FRAMEWORK: "torchvision"
-    MODEL: "lraspp_mobilenet_v3_large" # also used for submission save.
-    MODEL_CFG:
-        pretrained: True
-    
-    
-    # # 2. IF you use smp model
-    # # smp.create_model(**cfg["SELECTED"]["MODEL_CFG"]) 형태로 사용하기 때문에
-    # # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
-    # FRAMEWORK: "segmentation_models_pytorch"
+    # # 1. IF you use torchvision model
+    # FRAMEWORK: "torchvision"
+    # MODEL: "lraspp_mobilenet_v3_large" # also used for submission save.
     # MODEL_CFG:
-    #     arch: "fpn"                 # DECODER
-    #     encoder_name: "timm-efficientnet-b6" # ENCODER
-    #     encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
-    #                                          # (https://smp.readthedocs.io/en/latest/encoders.html)
-    #                                          # ("imagenet", "advpros", "noisy-student" 등)
-    #     in_channels: 3 # fixed
-    #     classes: 11    # fixed
+    #     pretrained: True
+    
+    
+    # 2. IF you use smp model
+    # smp.create_model(**cfg["SELECTED"]["MODEL_CFG"]) 형태로 사용하기 때문에
+    # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
+    FRAMEWORK: "segmentation_models_pytorch"
+    MODEL_CFG:
+        arch: "fpn"                 # DECODER
+        encoder_name: "timm-efficientnet-b6" # ENCODER
+        encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
+                                             # (https://smp.readthedocs.io/en/latest/encoders.html)
+                                             # ("imagenet", "advpros", "noisy-student" 등)
+        in_channels: 3 # fixed
+        classes: 11    # fixed
     
     CRITERION: 
         FRAMEWORK: "pytorch_toolbelt"
@@ -84,11 +84,11 @@ SELECTED:
 
 EXPERIMENTS:
     SEED: 21
-    NUM_EPOCHS: 1
+    NUM_EPOCHS: 30
     BATCH_SIZE: 16
     LEARNING_RATE: 1e-4
     NUM_WORKERS: 4
-    VAL_EVERY: 1
+    VAL_EVERY: 5
     
     KFOLD:
         TURN_ON: True
@@ -98,11 +98,11 @@ EXPERIMENTS:
     AUTOCAST_TURN_ON: True
     
     WNB:
-        TURN_ON: False
+        TURN_ON: True
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "lraspp_mobilenet_v3_large-fold-test" # recommended to change if wnb is turn-on.
+            name: "fpn_timm-efficientnet-b6" # recommended to change if wnb is turn-on.
     
     
     SAVED_DIR: 
