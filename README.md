@@ -27,7 +27,7 @@ $ unzip rawdata.zip
 $ rm rawdata.zip
 ```
 
-> **Dataset Copy Right and License:** [*Naver Connect*](https://connect.or.kr/), [*CC-BY-2.0*](https://creativecommons.org/licenses/by/2.0/kr/) 
+> **Dataset Copy Right and License:** [*Naver Connect*](https://connect.or.kr/), [*CC-BY-2.0*](https://creativecommons.org/licenses/by/2.0/kr/)  
 > For more detail about this dataset, see [*here*](./DATASET_DESCRIPTION.md).
 
 ## 1.2. Get Some Libraries.
