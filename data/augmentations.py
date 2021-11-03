@@ -10,6 +10,7 @@ def get_transforms(cfg):
     train_trans = (
         A.Compose(
             [
+                A.Resize(height=512, width=512),
                 A.OneOf(
                     [
                         getattr(A, trans)(**config)
