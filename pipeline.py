@@ -28,7 +28,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 if __name__ == "__main__":
     cfg = get_cfg_from(get_args())
-    fix_seed_as(cfg["SEED"])
+    fix_seed_as(cfg["EXPERIMENTS"]["SEED"])
     
     # wandb 시작
     wnb_run = wnb_init(cfg)
