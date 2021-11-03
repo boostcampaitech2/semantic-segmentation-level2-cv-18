@@ -174,7 +174,7 @@ class PseudoDataset(Dataset):
 	
 
 # select dataset
-def select_dataset(dataset, data_dir, augmix_data):
+def select_dataset(dataset, data_dir, augmix_data=None):
 	# path
 	dataset_path = data_dir
 	train_path = dataset_path + '/train_all.json'

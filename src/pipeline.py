@@ -61,7 +61,7 @@ def train(yaml, model, train_loader, val_loader,
 
 				if (step + 1) % log_step == 0:
 					print(
-						f'Step [{step + 1}/{len(pseduo_loader)}] | Train_Loss: {train_loss / log_step:.4f}, Train_IoU: {train_iou / log_step:.4f}'
+						f'Step [{step + 1}/{len(pseduo_loader)}] | Pseduo_Loss: {train_loss / log_step:.4f}, Pseduo_IoU: {train_iou / log_step:.4f}'
 						)
 					wandb.log({
 							'Pseduo/Loss': train_loss / log_step,

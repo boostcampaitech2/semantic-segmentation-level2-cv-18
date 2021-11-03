@@ -11,12 +11,12 @@
 - [x] using yaml
 - [x] dataset with/without augmix
 - [x] inference with dense crf
-- [ ] inference with tta
+- [x] inference with tta
 - [x] checkpoint according to iou, loss, both
 - [x] automatically generate checkpoint folder (like yolov5)
-- [ ] create checkpoint folder set by the user(on/off=automatically(exp1, 2...))
-- [ ] pseudo on/off => need to debug
+- [x] pseudo on/off
 - [ ] change pseudo parser into store_true, unify parsers
+- [ ] create checkpoint folder set by the user(on/off=automatically(exp1, 2...))
 - [ ] bash script => ing
 
 

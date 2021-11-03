@@ -23,8 +23,8 @@ def inference(yaml):
 			)
 	# model
 	model = select_model(yaml['model'])
-	model = load_model(model, yaml['inference_dir'], yaml['save_name'])
-	model = model.to(device)
+	model = load_model(model, yaml['inference_dir'], yaml['save_name'], device).to(device)
+	model = select_tta(model, yaml['is_tta'])
 	# test
 	file_name_list, preds_array = test(
 			yaml['seed'], model, test_loader, yaml['is_crf'], device

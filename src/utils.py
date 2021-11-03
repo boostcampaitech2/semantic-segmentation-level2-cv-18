@@ -36,7 +36,7 @@ def wandb_setting(max_lr, seed, batch_size, wandb_name):
 
 
 # load model
-def load_model(model, load_path, yaml_model):
+def load_model(model, load_path, yaml_model, device):
 	load_model_path = os.path.join(load_path, yaml_model + '.pt')
 	checkpoint = torch.load(load_model_path, map_location=device)
 	model.load_state_dict(checkpoint)

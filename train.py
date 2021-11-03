@@ -35,7 +35,7 @@ def main(yaml):
 	# model
 	model = select_model(yaml['model'])
 	if yaml['is_load']:
-		model = load_model(model, yaml['load_path'], yaml['model'])
+		model = load_model(model, yaml['load_path'], yaml['model'], device)
 	model = model.to(device)
 	wandb.watch(model)
 	# criterion

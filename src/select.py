@@ -1,8 +1,10 @@
 from torch.optim import AdamW, Adam
 from madgrad import MADGRAD
+import ttach as tta
 
 from src.models import *
 from src.losses import *
+from src.transforms import tta_tf
 
 
 # select model
@@ -16,6 +18,14 @@ def select_model(model_name):
 		model = UnetPlusPlus()
 	return model
 
+
+# if tta is possible
+def select_tta(model, is_tta):
+	if is_tta:
+		tta_model = tta.SegmentationTTAWrapper(model, tta_tf, merge_mode='mean')
+		model = tta_model
+	return model
+		
 
 # select criterion
 def select_criterion(loss):
