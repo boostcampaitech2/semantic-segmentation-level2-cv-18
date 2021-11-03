@@ -507,7 +507,7 @@ def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
 
 def main():
     cfg = get_cfg_from(get_args())
-    fix_seed_as(cfg["SEED"])
+    fix_seed_as(cfg["EXPERIMENTS"]["SEED"])
 
     # wandb 시작
     wnb_run = wnb_init(cfg)
