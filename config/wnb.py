@@ -7,4 +7,3 @@ def wnb_init(cfg):
         run = wandb.init(**exp_cfg["WNB"]["INIT"])
         wandb.config.update(cfg)
         return run
-    

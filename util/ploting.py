@@ -6,9 +6,12 @@ import wandb
 
 from matplotlib.patches import Patch
 from matplotlib import pyplot as plt
-plt.rcParams['axes.grid'] = False
 
-import seaborn as sns; sns.set()
+plt.rcParams["axes.grid"] = False
+
+import seaborn as sns
+
+sns.set()
 
 import torch
 
@@ -19,16 +22,22 @@ def infer(cfg, model, temp_images, device):
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
     
     # 모델 라이브러리 별 ouputs 코드
-    if frame_selected == "torchvision": 
+    if frame_selected == "torchvision":
         outputs = model(torch.stack(temp_images).to(device))["out"]
-    elif frame_selected == "segmentation_models_pytorch": 
+    elif frame_selected == "segmentation_models_pytorch":
         outputs = model(torch.stack(temp_images).to(device))
-        
+
     return outputs
 
 
 def plot_examples(
-    model, cfg, device, mode:str=None, batch_id:int=0, num_examples:int=8, dataloader=None
+    model,
+    cfg,
+    device,
+    mode: str = None,
+    batch_id: int = 0,
+    num_examples: int = 8,
+    dataloader=None,
 ):
     """Visualization of images and masks according to batch size
     Args:
@@ -40,7 +49,7 @@ def plot_examples(
         None
     """
     class_colormap = pd.read_csv("./class_dict.csv")
-    
+
     # variable for legend
     category_and_rgb = [
         [category, (r, g, b)]
@@ -151,7 +160,8 @@ def plot_examples(
 def plot_train_dist(cfg, df):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     ax.set_title("Category Distribution of train set")
-    sns.barplot(x="Number of annotations", y="Categories", data=df, ax=ax, color="skyblue")
+    sns.barplot(
+        x="Number of annotations", y="Categories", data=df, ax=ax, color="skyblue"
+    )
     if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         wandb.log({"Distribution of train set": wandb.Image(ax)})
-        
