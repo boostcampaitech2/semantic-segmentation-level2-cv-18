@@ -20,7 +20,8 @@ from .utils import label_to_color_image
 
 def infer(cfg, model, temp_images, device):
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
-
+    
+    # 모델 라이브러리 별 ouputs 코드
     if frame_selected == "torchvision":
         outputs = model(torch.stack(temp_images).to(device))["out"]
     elif frame_selected == "segmentation_models_pytorch":
@@ -155,7 +156,7 @@ def plot_examples(
         if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             wandb.log({f"{mode.title()}/viz": wandb.Image(fig)})
 
-
+# 훈련 데이터 분포 막대 그래프
 def plot_train_dist(cfg, df):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     ax.set_title("Category Distribution of train set")
