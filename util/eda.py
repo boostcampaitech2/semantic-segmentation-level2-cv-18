@@ -63,7 +63,7 @@ def eda(cfg):
 
 
 # MultilabelStratifiedKFold 적용을 위해 annotation과 img를 반환
-def get_anns_imgs(cfg):
+def get_cats_anns_imgs(cfg):
     dataset_path = cfg["DATASET"]["PATH"]
     anns_file_path = os.path.join(dataset_path, cfg["DATASET"]["ANNS_FILE_NAME"])
 

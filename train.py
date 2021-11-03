@@ -46,6 +46,7 @@ from data.dataloader import (
 from config.read_config import print_ver_n_settings, get_args, get_cfg_from
 from config.fix_seed import fix_seed_as
 from config.wnb import wnb_init
+from util.eda import get_cats_anns_imgs
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -424,7 +425,7 @@ def train_kfold(
         )
     
     # MultilabelStratifiedKFold 적용에 필요한 정보 호출
-    cats, anns, imgs = get_anns_imgs() # 카테고리 정보, 주석, 이미지
+    cats, anns, imgs = get_cats_anns_imgs() # 카테고리 정보, 주석, 이미지
     X = imgs
     y = [[0]*len(cats) for _ in range(len(imgs))] # 2x2 행렬 
 
