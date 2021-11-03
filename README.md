@@ -129,11 +129,27 @@ $ rm rawdata.zip
 
 ## 4.1. Model
 
+- Encoder : timm-efficientnet-b7
+   - Weight : noisy-student
+- Decoder : FPN
+   - In channel : 3
+   - Classes : 11
+- Fold : KFold, MultilabelStratifiedKFold
+   - Number of fold : 5
+- Learning rate : 0.0001
+- TTA : Horizontal flip
+
 ## 4.2. Loss
+
+`SoftCrossEntropyLoss` in pytorch_toolbelt
 
 ## 4.3. Optimizer
 
+`CosineAnnealingWarmRestarts` in torch.optim.lr_scheduler
+
 ## 4.4. Scaler
+
+`Autocast` and `GradScaler` were used to shorten training time. 
 
 ## 4.5. Augmentations
 
