@@ -183,7 +183,7 @@ By using light model, we perform quickly various augmentation experiments.
 
 ## 4.7. TTA
 
-We try to use [*ttach* library](https://github.com/qubvel/ttach) but, can't use it. So, we apply only flip TTA, which is satisfied that augmentation is equal to reverse augmentation ( *i.e.* $ \text{aug} = \text{inv(aug)} $ )
+We try to use [*ttach* library](https://github.com/qubvel/ttach) but, can't use it. So, we apply only flip TTA, which is satisfied that augmentation is equal to reverse augmentation.
 
 You can add such augmentation function codes in `./util/tta.py` and modify `./config/default.yaml` and `get_tta_list` function in `./util/tta.py`.
 
