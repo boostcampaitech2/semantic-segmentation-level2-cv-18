@@ -15,12 +15,13 @@ sns.set()
 
 import torch
 
-from .utils import label_to_color_image
+from .utils import label_to_color_image, get_classes
 
 
 def infer(cfg, model, temp_images, device):
     frame_selected = cfg["SELECTED"]["FRAMEWORK"]
 
+    # 모델 라이브러리 별 ouputs 코드
     if frame_selected == "torchvision":
         outputs = model(torch.stack(temp_images).to(device))["out"]
     elif frame_selected == "segmentation_models_pytorch":
@@ -36,14 +37,14 @@ def plot_examples(
     mode: str = None,
     batch_id: int = 0,
     num_examples: int = 8,
-    dataloaer=None,
+    dataloader=None,
 ):
     """Visualization of images and masks according to batch size
     Args:
         mode: train/val/test (str)
         batch_id : 0 (int)
         num_examples : 1 ~ batch_size(e.g. 8) (int)
-        dataloaer : data_loader (dataloader)
+        dataloader : data_loader (dataloader)
     Returns:
         None
     """
@@ -66,7 +67,7 @@ def plot_examples(
     # test / validation set에 대한 시각화
     if mode in ("train", "val"):
         with torch.no_grad():
-            for index, (imgs, masks, image_infos) in enumerate(dataloaer):
+            for index, (imgs, masks, image_infos) in enumerate(dataloader):
                 if index == batch_id:
                     image_infos = image_infos
                     temp_images = imgs
@@ -110,13 +111,13 @@ def plot_examples(
                 loc=2,
                 borderaxespad=0,
             )
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             wandb.log({f"{mode.title()}/viz": wandb.Image(fig)})
 
     # test set에 대한 시각화
     else:
         with torch.no_grad():
-            for index, (imgs, image_infos) in enumerate(dataloaer):
+            for index, (imgs, image_infos) in enumerate(dataloader):
                 if index == batch_id:
                     image_infos = image_infos
                     temp_images = imgs
@@ -152,15 +153,25 @@ def plot_examples(
                 loc=2,
                 borderaxespad=0,
             )
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             wandb.log({f"{mode.title()}/viz": wandb.Image(fig)})
 
 
+# 훈련 데이터 분포 막대 그래프
 def plot_train_dist(cfg, df):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     ax.set_title("Category Distribution of train set")
     sns.barplot(
         x="Number of annotations", y="Categories", data=df, ax=ax, color="skyblue"
     )
-    if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         wandb.log({"Distribution of train set": wandb.Image(ax)})
+
+
+# for test
+def main():
+    return
+
+
+if __name__ == "__main__":
+    main()

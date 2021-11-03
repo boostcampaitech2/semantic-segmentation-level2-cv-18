@@ -52,6 +52,26 @@ def add_hist(hist, label_trues, label_preds, n_class):
     return hist
 
 
+def get_classes():
+    return pd.read_csv("./class_dict.csv")["name"].tolist()
+
+
+def create_trash_label_colormap():
+    """Creates a label colormap used in Trash segmentation.
+    Returns:
+        A colormap for visualizing segmentation results.
+    """
+    df_class_dict = pd.read_csv("./class_dict.csv")
+    color_map = [
+        df_class_dict["r"].tolist(),
+        df_class_dict["g"].tolist(),
+        df_class_dict["b"].tolist(),
+    ]
+    color_map = list(zip(*color_map))
+
+    return color_map
+
+
 def _fast_hist(label_true, label_pred, n_class):
     mask = (label_true >= 0) & (label_true < n_class)
     hist = np.bincount(
@@ -85,19 +105,6 @@ def label_to_color_image(label):
         raise ValueError("label value too large.")
 
     return colormap[label]
-
-
-def create_trash_label_colormap():
-    """Creates a label colormap used in Trash segmentation.
-    Returns:
-        A colormap for visualizing segmentation results.
-    """
-    class_colormap = pd.read_csv("./class_dict.csv")
-    colormap = np.zeros((11, 3), dtype=np.uint8)
-    for inex, (_, r, g, b) in enumerate(class_colormap.values):
-        colormap[inex] = [r, g, b]
-
-    return colormap
 
 
 ########################################################################################

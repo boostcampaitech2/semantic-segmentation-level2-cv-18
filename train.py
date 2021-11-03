@@ -512,7 +512,7 @@ def main():
     # wandb 시작
     wnb_run = wnb_init(cfg)
 
-    print_ver_n_settings() # 버전 출력
+    print_ver_n_settings()  # 버전 출력
     eda(cfg)
     pprint(cfg)
 
@@ -527,7 +527,7 @@ def main():
     train_dataloader, val_dataloader, _ = get_dataloaders(cfg, category_names)
 
     train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
-    
+
     # wandb 사용 시 종료
     if wnb_run is not None:
         wnb_run.finish()

@@ -107,7 +107,7 @@ def inference_one(model, test_dataloader, device, cfg):
 
             file_name_list.append([i["file_name"] for i in image_infos])
 
-    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]: # wandb에 train된 image와 mask 업로드
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:  # wandb에 train된 image와 mask 업로드
         plot_examples(
             model=model,
             cfg=cfg,
@@ -117,7 +117,7 @@ def inference_one(model, test_dataloader, device, cfg):
             num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
             dataloader=test_dataloader,
         )
-    
+
     print("End prediction.")
     file_names = [y for x in file_name_list for y in x]
 
@@ -175,7 +175,7 @@ def inference_kfold(models, test_dataloader, device, cfg):
 
             file_name_list.append([i["file_name"] for i in image_infos])
 
-    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]: # wandb에 inference된 image와 mask 업로드
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:  # wandb에 inference된 image와 mask 업로드
         plot_examples(
             model=model,
             cfg=cfg,
@@ -192,11 +192,11 @@ def inference_kfold(models, test_dataloader, device, cfg):
 
 
 def inference(test_dataloader, device, cfg):
-    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]: # K-Flod 미적용
+    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:  # K-Flod 미적용
         model_trained = get_trained_model(cfg, DEVICE)
 
         return inference_one(model_trained, test_dataloader, device, cfg)
-    else: # K-Flod 적용
+    else:  # K-Flod 적용
         models_trained = [
             get_trained_model(cfg, DEVICE, fold)
             for fold in range(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"])
@@ -271,8 +271,8 @@ def main():
     wnb_run = wnb_init(cfg)
     print_ver_n_settings()
     pprint(cfg)
-    
-    # 데이터 프레임 
+
+    # 데이터 프레임
     df_train_categories_counts = get_df_train_categories_counts(cfg)
     sorted_df_train_categories_counts = add_bg_index_to(df_train_categories_counts)
     category_names = sorted_df_train_categories_counts["Categories"].to_list()
