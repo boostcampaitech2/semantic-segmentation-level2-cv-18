@@ -110,19 +110,15 @@ def _fast_hist(label_true, label_pred, n_class):
 	return hist
 
 
-# crf
+# Reference
+# https://github.com/kunalmessi10/FCN-with-CRF-post-processing/blob/3633c45cda672b33686c005c09ebc9ffb1a6859e/camvid_train.py#L254
 def dense_crf_wrapper(args):
 	return dense_crf(args[0], args[1])
 
-
+# Reference
+# https://github.com/kunalmessi10/FCN-with-CRF-post-processing/blob/master/crf.py
+# https://www.programcreek.com/python/example/106424/pydensecrf.densecrf.DenseCRF2D
 def dense_crf(img, output_probs):
-	# MAX_ITER = 10
-	# POS_W = 3
-	# POS_XY_STD = 1
-	# Bi_W = 4
-	# Bi_XY_STD = 67
-	# Bi_RGB_STD = 3
-
 	MAX_ITER = 50
 	POS_W = 3
 	POS_XY_STD = 3
