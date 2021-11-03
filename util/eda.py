@@ -60,3 +60,20 @@ def eda(cfg):
     print("Number of annotations:", num_annotations)
     print("Number of images:", num_images)
     print("-" * 30)
+
+
+# MultilabelStratifiedKFold 적용을 위해 annotation과 img를 반환
+def get_anns_imgs(cfg):
+    dataset_path = cfg["DATASET"]["PATH"]
+    anns_file_path = os.path.join(dataset_path, cfg["DATASET"]["ANNS_FILE_NAME"])
+
+    # Read annotations
+    with open(anns_file_path, "r") as f:
+        dataset = json.loads(f.read())
+
+    categories = dataset["categories"]
+    anns = dataset["annotations"]
+    imgs = dataset["images"]
+
+    return categories, anns, imgs
+

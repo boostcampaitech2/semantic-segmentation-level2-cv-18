@@ -27,6 +27,7 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 from sklearn.model_selection import GroupKFold, KFold
+from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
 import wandb
 
@@ -414,18 +415,37 @@ def train_kfold(
     category_names,
     cfg,
 ):
-    kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
 
+    # MultilabelStratifiedKFold 설정
+    mlkf = MultilabelStratifiedKFold(
+        n_splits = cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"],
+        shuffle = True,
+        random_state=0
+        )
+    
+    # MultilabelStratifiedKFold 적용에 필요한 정보 호출
+    cats, anns, imgs = get_anns_imgs() # 카테고리 정보, 주석, 이미지
+    X = imgs
+    y = [[0]*len(cats) for _ in range(len(imgs))] # 2x2 행렬 
+
+    # image에 등장하는 물체의 카테고리를 y에 기록
+    for instance in anns:
+        row = instance['image_id'] 
+        col = instance['category_id'] - 1
+        y[row][col] += 1
+
+    # 학습에 필요한 데이터셋, 설정 불러오기
     train_dataset, _, _ = get_datasets(cfg, category_names)
     val_dataset = get_val_dataset_for_kfold(cfg, category_names)
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
 
-    for fold, (train_ids, val_ids) in enumerate(kf.split(train_dataset)):
-
+    # MultilabelStratifiedKFold 시작
+    for fold, (train_ids, val_ids) in enumerate(mlkf.split(X, y)):
         print(f"FOLD - {fold+1}")
-        print("---------------------------------------------------------")
+        print("="*60)
 
+        # train 데이터셋, valid 데이터셋 index 추출 
         train_subsampler = SubsetRandomSampler(train_ids)
         val_subsampler = SubsetRandomSampler(val_ids)
 

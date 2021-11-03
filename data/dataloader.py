@@ -78,6 +78,7 @@ def get_dataloaders(cfg, category_names):
     return [train_dataloader, val_dataloader, test_dataloader]
 
 
+# KFold 적용을 위한 검증 데이터셋 호출 함수
 def get_val_dataset_for_kfold(cfg, category_names):
     """Get val dataset applying train transforms."""
     _, val_trans, _ = get_transforms(cfg)
