@@ -119,7 +119,7 @@ def dense_crf_wrapper(args):
 # https://github.com/kunalmessi10/FCN-with-CRF-post-processing/blob/master/crf.py
 # https://www.programcreek.com/python/example/106424/pydensecrf.densecrf.DenseCRF2D
 def dense_crf(img, output_probs):
-	MAX_ITER = 50
+	MAX_ITER = 10
 	POS_W = 3
 	POS_XY_STD = 3
 	Bi_W = 4
