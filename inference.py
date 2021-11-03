@@ -272,7 +272,7 @@ def main():
     print_ver_n_settings()
     pprint(cfg)
 
-    # 데이터 프레임
+    # 데이터 프레임 
     df_train_categories_counts = get_df_train_categories_counts(cfg)
     sorted_df_train_categories_counts = add_bg_index_to(df_train_categories_counts)
     category_names = sorted_df_train_categories_counts["Categories"].to_list()

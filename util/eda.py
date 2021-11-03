@@ -74,6 +74,4 @@ def get_cats_anns_imgs(cfg):
     categories = dataset["categories"]
     anns = dataset["annotations"]
     imgs = dataset["images"]
-
     return categories, anns, imgs
-
