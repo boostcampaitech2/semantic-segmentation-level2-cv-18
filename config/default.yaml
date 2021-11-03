@@ -50,6 +50,9 @@ CRITERION_AVAILABLE:
                        "WeightedLoss", "BinaryLovaszLoss", "LovaszLoss", "SoftBCEWithLogitsLoss", 
                        "SoftCrossEntropyLoss", "BinarySoftF1Loss", "SoftF1Loss", "WingLoss"]
     
+KFOLD_TYPE_AVAILABLE: ["KFold", "MultilabelStratifiedKFold"]
+
+
 
 SELECTED:
     # 1. IF you use torchvision model
@@ -88,7 +91,8 @@ EXPERIMENTS:
     VAL_EVERY: 1
     
     KFOLD:
-        TURN_ON: False
+        TURN_ON: True
+        TYPE: "MultilabelStratifiedKFold"
         NUM_FOLD: 5
     
     AUTOCAST_TURN_ON: True
@@ -98,7 +102,7 @@ EXPERIMENTS:
         INIT:
             entity: "ai_tech_level2-cv-18"
             project: "seunghun_T2042"
-            name: "fpn_timm-efficientnet-b6_211102_13h" # recommended to change if wnb is turn-on.
+            name: "lraspp_mobilenet_v3_large-fold-test" # recommended to change if wnb is turn-on.
     
     
     SAVED_DIR: 

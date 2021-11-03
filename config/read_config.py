@@ -35,9 +35,11 @@ def get_args():
 def cfg_check(cfg):
     """Check the user's selection."""
 
+    # Model Framework test
     selected_framework = cfg["SELECTED"]["FRAMEWORK"]
     assert selected_framework in cfg["FRAMEWORKS_AVAILABLE"]
 
+    # 
     if selected_framework == "torchvision":
         assert cfg["SELECTED"]["MODEL"] in cfg["MODELS_AVAILABLE"][selected_framework]
     elif selected_framework == "segmentation_models_pytorch":

@@ -27,13 +27,14 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 from sklearn.model_selection import GroupKFold, KFold
+from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
 import wandb
 
 
 from util.ploting import plot_examples, plot_train_dist
 from util.utils import label_accuracy_score, add_hist
-from util.eda import eda, get_df_train_categories_counts, add_bg_index_to
+from util.eda import eda, get_df_train_categories_counts, add_bg_index_to, get_anns_imgs
 
 from data.dataloader import (
     get_dataloaders,
@@ -67,6 +68,34 @@ def get_model_inference(cfg, model, images):
         outputs = model(images)
 
     return outputs
+
+
+def get_fold_split_enumerate_obj(cfg, train_dataset):
+    assert cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]
+    
+    fold_split_enumerate_obj = None
+    
+    if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
+        if cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "KFold":
+            kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
+            fold_split_enumerate_obj = enumerate(kf.split(train_dataset))
+        elif cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "MultilabelStratifiedKFold":
+            mlkf  = MultilabelStratifiedKFold(n_splits = cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"],
+                                              shuffle = True,
+                                              random_state=0)
+            cats, anns, imgs = get_anns_imgs(cfg) # 카테고리 정보, 주석, 이미지
+            X = imgs
+            y = [[0]*len(cats) for _ in range(len(imgs))] # 2x2 행렬 
+
+            # image에 등장하는 물체의 카테고리를 y에 기록
+            for instance in anns:
+                row = instance['image_id'] 
+                col = instance['category_id'] - 1
+                y[row][col] += 1
+                
+            fold_split_enumerate_obj = enumerate(mlkf.split(X, y))
+    
+    return fold_split_enumerate_obj
 
 
 def simple_check(cfg, model):
@@ -414,17 +443,17 @@ def train_kfold(
     category_names,
     cfg,
 ):
-    kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
-
     train_dataset, _, _ = get_datasets(cfg, category_names)
     val_dataset = get_val_dataset_for_kfold(cfg, category_names)
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
-
-    for fold, (train_ids, val_ids) in enumerate(kf.split(train_dataset)):
+    
+    fold_split_enumerate_obj = get_fold_split_enumerate_obj(cfg, train_dataset)
+    
+    for fold, (train_ids, val_ids) in fold_split_enumerate_obj:
 
         print(f"FOLD - {fold+1}")
-        print("---------------------------------------------------------")
+        print("="*60)
 
         train_subsampler = SubsetRandomSampler(train_ids)
         val_subsampler = SubsetRandomSampler(val_ids)

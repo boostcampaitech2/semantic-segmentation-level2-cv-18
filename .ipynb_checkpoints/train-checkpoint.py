@@ -1,5 +1,6 @@
 import os
 from pprint import pprint
+from tqdm import tqdm
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -12,13 +13,35 @@ from torch.cuda.amp import autocast, GradScaler
 import torchvision
 import segmentation_models_pytorch as smp
 
+# criterion
+from pytorch_toolbelt import losses as L
+
+# optimizer
+from madgrad import MADGRAD
+
+# scheduler
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+
+
+# Fold를 위한 라이브러리
+from torch.utils.data import DataLoader
+from torch.utils.data import SubsetRandomSampler
+from sklearn.model_selection import GroupKFold, KFold
+from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
+
 import wandb
+
 
 from util.ploting import plot_examples, plot_train_dist
 from util.utils import label_accuracy_score, add_hist
-from util.eda import eda, get_df_train_categories_counts, add_bg_index_to
+from util.eda import eda, get_df_train_categories_counts, add_bg_index_to, get_anns_imgs
 
-from data.dataloader import get_dataloaders
+from data.dataloader import (
+    get_dataloaders,
+    get_datasets,
+    collate_fn,
+    get_val_dataset_for_kfold,
+)
 
 from config.read_config import print_ver_n_settings, get_args, get_cfg_from
 from config.fix_seed import fix_seed_as
@@ -35,10 +58,55 @@ def is_same_height(t1, t2):
     return t1.shape[-1] == t2.size(-1)
 
 
+def get_model_inference(cfg, model, images):
+    frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+
+    # inference
+    if frame_selected == "torchvision":
+        outputs = model(images)["out"]
+    elif frame_selected == "segmentation_models_pytorch":
+        outputs = model(images)
+
+    return outputs
+
+
+def get_fold_split_enumerate_obj(cfg, train_dataset):
+    assert cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]
+    
+    fold_split_enumerate_obj = None
+    
+    if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
+        if cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "KFold":
+            kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
+            fold_split_enumerate_obj = enumerate(kf.split(train_dataset))
+        elif cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "MultilabelStratifiedKFold":
+            mlkf  = MultilabelStratifiedKFold(n_splits = cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"],
+                                              shuffle = True,
+                                              random_state=0)
+            cats, anns, imgs = get_anns_imgs(cfg) # 카테고리 정보, 주석, 이미지
+            X = imgs
+            y = [[0]*len(cats) for _ in range(len(imgs))] # 2x2 행렬 
+
+            # image에 등장하는 물체의 카테고리를 y에 기록
+            for instance in anns:
+                row = instance['image_id'] 
+                col = instance['category_id'] - 1
+                y[row][col] += 1
+                
+            fold_split_enumerate_obj = enumerate(mlkf.split(X, y))
+    
+    return fold_split_enumerate_obj
+
+
 def simple_check(cfg, model):
-    # 구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test
+    """구현된 model에 임의의 input을 넣어 output이 잘 나오는지 test"""
     x = torch.randn([2, 3, 512, 512])
-    out = model(x)["out"]
+
+    if cfg["SELECTED"]["FRAMEWORK"] == "torchvision":
+        out = model(x)["out"]
+    elif cfg["SELECTED"]["FRAMEWORK"] == "segmentation_models_pytorch":
+        out = model(x)
+
     assert is_same_width(x, out) and is_same_height(x, out)
     assert out.size(-3) == cfg["DATASET"]["NUM_CLASSES"]
 
@@ -77,16 +145,15 @@ def set_smp_model(cfg, model):
 
 def get_trainable_model(cfg):
     cfg_selected = cfg["SELECTED"]
-    model_selected = cfg_selected["MODEL"]
     frame_selected = cfg_selected["FRAMEWORK"]
     num_classes = cfg["DATASET"]["NUM_CLASSES"]
 
     if frame_selected == "torchvision":
-        model = getattr(torchvision.models.segmentation, model_selected)(
-            **cfg_selected["MODEL_CFG"]
-        )
+        model_selected = cfg_selected["MODEL"]
+        Model = getattr(torchvision.models.segmentation, model_selected)
+        model = Model(**cfg_selected["MODEL_CFG"])
         model = set_torchvision_model(cfg, model)
-    elif cfg_selected["FRAMEWORK"] == "segmentation_models.pytorch":
+    elif frame_selected == "segmentation_models_pytorch":
         model = smp.create_model(**cfg_selected["MODEL_CFG"])
         model = set_smp_model(cfg, model)
 
@@ -101,25 +168,106 @@ def save_model(model, saved_dir, file_name):
     torch.save(model, output_path)
 
 
-def train(
+def calc_loss(cfg, model, images, masks, criterion, device):
+    frame_selected = cfg["SELECTED"]["FRAMEWORK"]
+    if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
+        with autocast(enabled=True):
+            # device 할당
+            model = model.to(device)
+            # inference
+            outputs = get_model_inference(cfg, model, images)
+            # loss 계산 (cross entropy loss)
+            loss = criterion(outputs, masks)
+    else:
+        # device 할당
+        model = model.to(device)
+        # inference
+        outputs = get_model_inference(cfg, model, images)
+        # loss 계산 (cross entropy loss)
+        loss = criterion(outputs, masks)
+
+    return [model, outputs, loss]
+
+
+def get_model_file_name(cfg, fold: int = None):
+    saved_model_file = ""
+    seleceted_framework = cfg["SELECTED"]["FRAMEWORK"]
+
+    if seleceted_framework == "torchvision":
+        saved_model_file = f"{cfg['SELECTED']['MODEL']}"
+    elif seleceted_framework == "segmentation_models_pytorch":
+        arch_name = cfg["SELECTED"]["MODEL_CFG"]["arch"]
+        enc_name = cfg["SELECTED"]["MODEL_CFG"]["encoder_name"]
+        enc_weights_name = cfg["SELECTED"]["MODEL_CFG"]["encoder_weights"]
+        saved_model_file = f"{arch_name}_{enc_name}_{enc_weights_name}"
+
+    if fold is not None:
+        saved_model_file += f"_{fold+1}"
+
+    saved_model_file += ".pt"
+    return saved_model_file
+
+
+def get_scaler():
+    return GradScaler()
+
+
+def get_criterion(cfg):
+    selected_criterion_framework = cfg["SELECTED"]["CRITERION"]["FRAMEWORK"]
+    selected_criterion = cfg["SELECTED"]["CRITERION"]["USE"]
+    selected_criterion_cfg = cfg["SELECTED"]["CRITERION"]["CFG"]
+
+    if selected_criterion_framework == "torch.nn":
+        Creterion = getattr(nn, selected_criterion)
+    elif selected_criterion_framework == "pytorch_toolbelt":
+        Creterion = getattr(L, selected_criterion)
+
+    assert Creterion is not None
+    creterion = (
+        Creterion()
+        if selected_criterion_cfg is None
+        else Creterion(**selected_criterion_cfg)
+    )
+    return creterion
+
+
+def get_optim(cfg, model):
+    return MADGRAD(
+        params=model.parameters(),
+        lr=cfg["EXPERIMENTS"]["LEARNING_RATE"],
+        weight_decay=1e-6,
+    )
+
+
+def get_scheduler(cfg, optimizer):
+    return CosineAnnealingWarmRestarts(
+        optimizer, T_0=cfg["EXPERIMENTS"]["NUM_EPOCHS"], T_mult=1
+    )
+
+
+def train_one(
     num_epochs,
     model,
     train_dataloader,
     val_dataloader,
     criterion,
     optimizer,
+    scheduler,
+    scaler,
     saved_dir,
     val_every,
     device,
     category_names,
     cfg,
+    fold: int = None,
 ):
-    print(f"Start training..")
+
+    print(f"Start training ...")
     n_class = 11
-    best_loss = 9999999
+    best_mIoU = 0.0
 
     # WandB watch model.
-    if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
         wandb.watch(model, log=all)
 
     for epoch in range(num_epochs):
@@ -128,32 +276,23 @@ def train(
         train_avg_loss, train_avg_mIoU = 0.0, 0.0
 
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(train_dataloader):
+        pbar_train = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
+        for step, (images, masks, _) in pbar_train:
             images, masks = torch.stack(images), torch.stack(masks).long()
 
             # gpu 연산을 위해 device 할당
             images, masks = images.to(device), masks.to(device)
 
-            if cfg["EXPERIMENTS"]["AUTOCAST_TURN_ON"]:
-                with autocast():
-                    # device 할당
-                    model = model.to(device)
-                    # inference
-                    outputs = model(images)["out"]
-                    # loss 계산 (cross entropy loss)
-                    loss = criterion(outputs, masks)
-            else:
-                # device 할당
-                model = model.to(device)
-                # inference
-                outputs = model(images)["out"]
-                # loss 계산 (cross entropy loss)
-                loss = criterion(outputs, masks)
+            model, outputs, loss = calc_loss(
+                cfg, model, images, masks, criterion, device
+            )
 
             train_avg_loss += loss.item() / len(masks)
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
 
             outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
             masks = masks.detach().cpu().numpy()
@@ -162,26 +301,27 @@ def train(
             acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
             train_avg_mIoU += mIoU
 
-            # step 주기에 따른 loss 출력
-            if (step + 1) % 25 == 0:
-                print(
-                    f"Epoch [{epoch+1}/{num_epochs}], Step [{step+1}/{len(train_dataloader)}], \
-                        Loss: {round(loss.item(),4)}, mIoU: {round(mIoU,4)}"
-                )
+            description_train = f"# epoch : {epoch + 1}  Loss: {round(loss.item(),4)}   mIoU: {round(mIoU,4)}"
+            pbar_train.set_description(description_train)
+
+        scheduler.step()
 
         # validation 주기에 따른 loss 출력 및 best model 저장
         if (epoch + 1) % val_every == 0:
-            avrg_loss = validation(
+            mIoU = validation(
                 epoch + 1, model, val_dataloader, criterion, device, category_names, cfg
             )
-            if avrg_loss < best_loss:
-                print(f"Best performance at epoch: {epoch + 1}")
+            if mIoU > best_mIoU:
+                print(
+                    f"Best performance at epoch: {epoch + 1}, Best mIoU: {round(best_mIoU, 4)} --> {round(mIoU, 4)}"
+                )
                 print(f"Save model in {saved_dir}")
-                best_loss = avrg_loss
-                save_model(model, saved_dir, file_name=f"{cfg['SELECTED']['MODEL']}.pt")
-            print()
+                best_mIoU = mIoU
 
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+                save_model(model, saved_dir, file_name=get_model_file_name(cfg, fold))
+                print()
+
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             train_avg_loss /= len(train_dataloader)
             train_avg_mIoU /= len(train_dataloader)
             wandb.log(
@@ -197,13 +337,26 @@ def train(
                 device=device,
                 mode="train",
                 batch_id=0,
-                num_examples=8,
-                dataloaer=train_dataloader,
+                num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
+                dataloader=train_dataloader,
             )
 
+    print("End of train\n")
 
-def validation(epoch, model, val_dataloader, criterion, device, category_names, cfg):
-    print(f"Start validation #{epoch}")
+
+def validation(
+    epoch,
+    model,
+    val_dataloader,
+    criterion,
+    device,
+    category_names,
+    cfg,
+    fold: int = None,
+):
+
+    print(f"Start validation ...")
+
     model.eval()
 
     with torch.no_grad():
@@ -212,38 +365,40 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
         cnt = 0
 
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(val_dataloader):
-
+        pbar_val = tqdm(enumerate(val_dataloader), total=len(val_dataloader))
+        for step, (images, masks, _) in pbar_val:
             images = torch.stack(images)
             masks = torch.stack(masks).long()
 
             images, masks = images.to(device), masks.to(device)
 
             # device 할당
-            model = model.to(device)
+            model, outputs, loss = calc_loss(
+                cfg, model, images, masks, criterion, device
+            )
 
-            outputs = model(images)["out"]
-            loss = criterion(outputs, masks)
             total_loss += loss
             cnt += 1
+            avrg_loss = total_loss / cnt
 
             outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
             masks = masks.detach().cpu().numpy()
 
             hist = add_hist(hist, masks, outputs, n_class=n_class)
+            acc, _, mIoU, _, _ = label_accuracy_score(hist)
+
+            description_val = f"# epoch : {epoch} Avg Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, mIoU: {round(mIoU, 4)}"
+            pbar_val.set_description(description_val)
 
         acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
         IoU_by_class = [
             {classes: round(IoU, 4)} for IoU, classes in zip(IoU, category_names)
         ]
-
         avrg_loss = total_loss / cnt
-        print(
-            f"Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
-                mIoU: {round(mIoU, 4)}"
-        )
+
         print(f"IoU by class : {IoU_by_class}")
-        if cfg["EXPERIMENTS"]["WNB_TURN_ON"]:
+
+        if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
             dict_IoU_by_class = {
                 classes: round(IoU, 4) for IoU, classes in zip(IoU, category_names)
             }
@@ -266,49 +421,143 @@ def validation(epoch, model, val_dataloader, criterion, device, category_names, 
                 device=device,
                 mode="val",
                 batch_id=0,
-                num_examples=8,
-                dataloaer=val_dataloader,
+                num_examples=cfg["EXPERIMENTS"]["BATCH_SIZE"],
+                dataloader=val_dataloader,
             )
 
-    return avrg_loss
+    return mIoU
+
+
+def train_kfold(
+    num_epochs,
+    model,
+    train_dataloader,
+    val_dataloader,
+    criterion,
+    optimizer,
+    scheduler,
+    scaler,
+    saved_dir,
+    val_every,
+    device,
+    category_names,
+    cfg,
+):
+    train_dataset, _, _ = get_datasets(cfg, category_names)
+    val_dataset = get_val_dataset_for_kfold(cfg, category_names)
+    batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
+    num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
+    
+    fold_split_enumerate_obj = get_fold_split_enumerate_obj(cfg, train_dataset)
+    
+    for fold, (train_ids, val_ids) in fold_split_enumerate_obj:
+
+        print(f"FOLD - {fold+1}")
+        print("="*60)
+
+        train_subsampler = SubsetRandomSampler(train_ids)
+        val_subsampler = SubsetRandomSampler(val_ids)
+
+        train_dataloader = DataLoader(
+            dataset=train_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            collate_fn=collate_fn,
+            sampler=train_subsampler,
+            persistent_workers=True,
+        )
+
+        val_dataloader = DataLoader(
+            dataset=val_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            collate_fn=collate_fn,
+            sampler=val_subsampler,
+            persistent_workers=True,
+        )
+
+        train_one(
+            num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"],
+            model=model,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            scaler=scaler,
+            saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"],
+            val_every=cfg["EXPERIMENTS"]["VAL_EVERY"],
+            device=device,
+            category_names=category_names,
+            cfg=cfg,
+            fold=fold,
+        )
+
+
+def train(cfg, model, train_dataloader, val_dataloader, category_names, device):
+    scaler = get_scaler()
+    criterion = get_criterion(cfg)
+    optimizer = get_optim(cfg, model)
+    scheduler = get_scheduler(cfg, optimizer)
+
+    if not cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
+        train_one(
+            num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"],
+            model=model,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            scaler=scaler,
+            saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"],
+            val_every=cfg["EXPERIMENTS"]["VAL_EVERY"],
+            device=device,
+            category_names=category_names,
+            cfg=cfg,
+        )
+    else:
+        train_kfold(
+            num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"],
+            model=model,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            scaler=scaler,
+            saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"],
+            val_every=cfg["EXPERIMENTS"]["VAL_EVERY"],
+            device=device,
+            category_names=category_names,
+            cfg=cfg,
+        )
 
 
 def main():
     cfg = get_cfg_from(get_args())
-    fix_seed_as(cfg["SEED"])
+    fix_seed_as(cfg["EXPERIMENTS"]["SEED"])
 
+    # wandb 시작
     wnb_run = wnb_init(cfg)
 
-    print_ver_n_settings()
+    print_ver_n_settings()  # 버전 출력
     eda(cfg)
     pprint(cfg)
 
+    # 데이터프레임 및 시각화 함수
     df_train_categories_counts = get_df_train_categories_counts(cfg)
     plot_train_dist(cfg, df_train_categories_counts)
     sorted_df_train_categories_counts = add_bg_index_to(df_train_categories_counts)
     category_names = sorted_df_train_categories_counts["Categories"].to_list()
 
+    # 모델 및 데이터로더 불러오기
     model = get_trainable_model(cfg)
     train_dataloader, val_dataloader, _ = get_dataloaders(cfg, category_names)
 
-    train(
-        num_epochs=cfg["EXPERIMENTS"]["NUM_EPOCHS"],
-        model=model,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        criterion=nn.CrossEntropyLoss(),
-        optimizer=torch.optim.Adam(
-            params=model.parameters(),
-            lr=cfg["EXPERIMENTS"]["LEARNING_RATE"],
-            weight_decay=1e-6,
-        ),
-        saved_dir=cfg["EXPERIMENTS"]["SAVED_DIR"]["BEST_MODEL"],
-        val_every=cfg["EXPERIMENTS"]["VAL_EVERY"],
-        device=DEVICE,
-        category_names=category_names,
-        cfg=cfg,
-    )
+    train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
 
+    # wandb 사용 시 종료
     if wnb_run is not None:
         wnb_run.finish()
 
