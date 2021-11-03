@@ -87,8 +87,8 @@ EXPERIMENTS:
     NUM_EPOCHS: 30
     BATCH_SIZE: 16
     LEARNING_RATE: 1e-4
-    NUM_WORKERS: 5
-    VAL_EVERY: 1
+    NUM_WORKERS: 4
+    VAL_EVERY: 5
     
     KFOLD:
         TURN_ON: True
