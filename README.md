@@ -17,7 +17,6 @@
 - [x] pseudo on/off
 - [x] bash script
 - [x] add model, HRNET+OCR
-- [ ] add loss, SoftCE
 - [ ] change pseudo parser into store_true, unify parsers
 
 
