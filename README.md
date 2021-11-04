@@ -344,15 +344,23 @@ $ rm rawdata.zip
 
 `SoftCrossEntropyLoss` in pytorch_toolbelt
 
+> SoftCE > CE > DiceCE > Dice
+
 ## 4.3. Optimizer
+
+`MADGRAD` provides generalization performance of SGD and fast convergence speed such as Adam.
+
+> MADGRAD > Adam
+
+## 4.4. Learning rate Scheduler
 
 `CosineAnnealingWarmRestarts` in torch.optim.lr_scheduler
 
-## 4.4. Scaler
+## 4.5. Scaler
 
 `Autocast` and `GradScaler` were used to shorten training time. 
 
-## 4.5. Augmentations
+## 4.6. Augmentations
 
 By using light model, we perform quickly various augmentation experiments.  
 
@@ -396,15 +404,15 @@ By using light model, we perform quickly various augmentation experiments.
 
      > As epoch increase, mIoU also increase. 
 
-## 4.6. K-Fold Ensemble
+## 4.7. K-Fold Ensemble
 
-## 4.7. TTA
+## 4.8. TTA
 
 We try to use [*ttach* library](https://github.com/qubvel/ttach) but, can't use it. So, we apply only flip TTA, which is satisfied that augmentation is equal to reverse augmentation.
 
 You can add such augmentation function codes in `./util/tta.py` and modify `./config/default.yaml` and `get_tta_list` function in `./util/tta.py`.
 
-## 4.8. Pseudo labeling
+## 4.9. Pseudo labeling
 
 
 
@@ -423,12 +431,12 @@ You can add such augmentation function codes in `./util/tta.py` and modify `./co
 
 # 6. Participants
 
-| Name           | Github                                        | Role                                                         |
-| -------------- | --------------------------------------------- | ------------------------------------------------------------ |
-| 김서기 (T2035) | [*Link*](https://github.com/seogi98)          | Research(*HRNet*, *MMSeg* library), Pseudo Labeling, TTA      |
-| 김승훈 (T2042) | [*Link*](https://github.com/lead-me-read-me)  | Find Augmentations, Code Refactoring                          |
-| 배민한 (T2260) | [*Link*](https://github.com/Minhan-Bae)       | Research(*smp* library, loss), Model Enhancement, K-Fold      | 
-| 손지아 (T2113) | [*Link*](https://github.com/oikosohn)         | Research(*smp* library, loss), Model Enhancement              |
-| 이상은 (T2157) | [*Link*](https://github.com/lisy0123)         | Research(*HRNet*, optimizer, loss), Pseudo Labeling, MLK-Fold |
-| 조익수 (T2213) | [*Link*](https://github.com/projectcybersyn2) | Research(*MMseg* library)                                     |
+|      Name      |                    Github                     | Role                                                        |
+| :------------: | :-------------------------------------------: | ----------------------------------------------------------- |
+| 김서기 (T2035) |     [*Link*](https://github.com/seogi98)      | Research(*HRNet*, *MMSeg* library), Pseudo Labeling, TTA    |
+| 김승훈 (T2042) | [*Link*](https://github.com/lead-me-read-me)  | Find Augmentations, Code Refactoring                        |
+| 배민한 (T2260) |    [*Link*](https://github.com/Minhan-Bae)    | Research(*smp* library, loss), Model Enhancement, K-Fold    |
+| 손지아 (T2113) |     [*Link*](https://github.com/oikosohn)     | Research(*smp* library, loss), Model Enhancement, MLK-Fold  |
+| 이상은 (T2157) |     [*Link*](https://github.com/lisy0123)     | Research(*HRNet*, optimizer, loss), Pseudo Labeling, Augmix |
+| 조익수 (T2213) | [*Link*](https://github.com/projectcybersyn2) | Research(*MMseg* library)                                   |
 
