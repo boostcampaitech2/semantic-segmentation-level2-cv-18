@@ -299,7 +299,7 @@ $ rm rawdata.zip
 
      ```yaml
      EXPERIMENTS:
-         # ...
+        # ...
          
      	TTA:
              TURN_ON: True
@@ -420,10 +420,10 @@ You can add such augmentation function codes in `./util/tta.py` and modify `./co
 
 ## 5.1. Leader Board in [Competition](https://stages.ai/competitions/78/overview/description)
 
-|            |                mIoU                 |
-| :--------: | :---------------------------------: |
-| Public LB  | **1st:** `0.781` and **2nd:** `0.1` |
-| Private LB |                `0.`                 |
+|            |  mIoU   |
+| :--------: | :-----: |
+| Public LB  | `0.781` |
+| Private LB | `0.717` |
 
 ## 5.2. Some images after model inference.
 
