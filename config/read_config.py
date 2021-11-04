@@ -1,6 +1,9 @@
 import os
 import argparse
 import yaml
+from pprint import pprint
+
+import wandb
 
 import torch
 
@@ -14,6 +17,14 @@ def print_ver_n_settings():
     print(torch.cuda.get_device_name(0))
     print(torch.cuda.device_count())
     print("-" * 30)
+
+
+def print_N_upload2wnb_users_config(cfg):
+    users_config = {k: v for k, v in cfg.items() if "AVAILABLE" not in k}
+    if cfg["EXPERIMENTS"]["WNB"]["TURN_ON"]:
+        wandb.config.update(users_config)
+
+    pprint(users_config)
 
 
 def get_args():
@@ -58,12 +69,12 @@ def cfg_check(cfg):
     tta_cfg = cfg["EXPERIMENTS"]["TTA"]
     if tta_cfg["TURN_ON"]:
         assert any(tta_cfg["AVAILABLE_LIST"].values())
-    
+
     # Test kfold config
     kfold_cfg = cfg["EXPERIMENTS"]["KFOLD"]
     if kfold_cfg["TURN_ON"]:
         assert kfold_cfg["TYPE"] in cfg["KFOLD_TYPE_AVAILABLE"]
-    
+
     # Test lr, num_epoch config
     assert cfg["EXPERIMENTS"]["LEARNING_RATE"] > 0
     assert cfg["EXPERIMENTS"]["NUM_EPOCHS"] >= cfg["EXPERIMENTS"]["VAL_EVERY"]

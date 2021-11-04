@@ -1,5 +1,4 @@
 import os
-from pprint import pprint
 from tqdm import tqdm
 import warnings
 
@@ -44,7 +43,12 @@ from data.dataloader import (
     get_train_dataset,
 )
 
-from config.read_config import print_ver_n_settings, get_args, get_cfg_from
+from config.read_config import (
+    print_ver_n_settings,
+    get_args,
+    get_cfg_from,
+    print_N_upload2wnb_users_config,
+)
 from config.fix_seed import fix_seed_as
 from config.wnb import wnb_init
 
@@ -73,29 +77,31 @@ def get_model_inference(cfg, model, images):
 
 def get_fold_split_enumerate_obj(cfg, train_dataset):
     assert cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]
-    
+
     fold_split_enumerate_obj = None
-    
+
     if cfg["EXPERIMENTS"]["KFOLD"]["TURN_ON"]:
         if cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "KFold":
             kf = KFold(cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"], shuffle=True)
             fold_split_enumerate_obj = enumerate(kf.split(train_dataset))
         elif cfg["EXPERIMENTS"]["KFOLD"]["TYPE"] == "MultilabelStratifiedKFold":
-            mlkf  = MultilabelStratifiedKFold(n_splits = cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"],
-                                              shuffle = True,
-                                              random_state=0)
-            cats, anns, imgs = get_anns_imgs(cfg) # 카테고리 정보, 주석, 이미지
+            mlkf = MultilabelStratifiedKFold(
+                n_splits=cfg["EXPERIMENTS"]["KFOLD"]["NUM_FOLD"],
+                shuffle=True,
+                random_state=0,
+            )
+            cats, anns, imgs = get_anns_imgs(cfg)  # 카테고리 정보, 주석, 이미지
             X = imgs
-            y = [[0]*len(cats) for _ in range(len(imgs))] # 2x2 행렬 
+            y = [[0] * len(cats) for _ in range(len(imgs))]  # 2x2 행렬
 
             # image에 등장하는 물체의 카테고리를 y에 기록
             for instance in anns:
-                row = instance['image_id'] 
-                col = instance['category_id'] - 1
+                row = instance["image_id"]
+                col = instance["category_id"] - 1
                 y[row][col] += 1
-                
+
             fold_split_enumerate_obj = enumerate(mlkf.split(X, y))
-    
+
     return fold_split_enumerate_obj
 
 
@@ -446,16 +452,16 @@ def train_kfold(
 ):
     train_dataset = get_train_dataset(cfg, category_names)
     val_dataset = get_val_dataset_for_kfold(cfg, category_names)
-    
+
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
-    
+
     fold_split_enumerate_obj = get_fold_split_enumerate_obj(cfg, train_dataset)
-    
+
     for fold, (train_ids, val_ids) in fold_split_enumerate_obj:
 
         print(f"FOLD - {fold+1}")
-        print("="*60)
+        print("=" * 60)
 
         train_subsampler = SubsetRandomSampler(train_ids)
         val_subsampler = SubsetRandomSampler(val_ids)
@@ -545,7 +551,7 @@ def main():
 
     print_ver_n_settings()  # 버전 출력
     eda(cfg)
-    pprint(cfg)
+    print_N_upload2wnb_users_config(cfg)
 
     # 데이터프레임 및 시각화 함수
     df_train_categories_counts = get_df_train_categories_counts(cfg)

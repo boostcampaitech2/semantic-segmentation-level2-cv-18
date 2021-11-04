@@ -1,6 +1,5 @@
 import os
 from tqdm import tqdm
-from pprint import pprint
 from functools import reduce
 import warnings
 
@@ -16,7 +15,12 @@ import torch.nn.functional as F
 
 from data.dataloader import get_test_dataloader
 
-from config.read_config import print_ver_n_settings, get_args, get_cfg_from
+from config.read_config import (
+    print_ver_n_settings,
+    get_args,
+    get_cfg_from,
+    print_N_upload2wnb_users_config,
+)
 from config.wnb import wnb_init
 from config.fix_seed import fix_seed_as
 
@@ -270,7 +274,7 @@ def main():
 
     wnb_run = wnb_init(cfg)
     print_ver_n_settings()
-    pprint(cfg)
+    print_N_upload2wnb_users_config(cfg)
 
     # 데이터 프레임
     df_train_categories_counts = get_df_train_categories_counts(cfg)
