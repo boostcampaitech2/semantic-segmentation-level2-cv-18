@@ -117,13 +117,214 @@ $ rm rawdata.zip
 ## 3.2. About configurations
 
 1. Listing the supported frameworks
+
+   ```yaml
+   FRAMEWORKS_AVAILABLE: ["torchvision", "segmentation_models_pytorch"]
+   ```
+
+   > Only support 2 frameworks.
+
 2. Listing the supported models (including encoders and decoders)
+
+   ```yaml
+   MODELS_AVAILABLE:
+       torchvision: ["fcn_resnet50", ... , "lraspp_mobilenet_v3_large"]
+                     
+   DECODER_AVAILABLE: ["unet", ... , "pan"] # smp decoder
+   
+   ENCODER_AVAILABLE: ['resnet18', ... , 'timm-gernet_l'] # smp encoder
+   ```
+
+   > *smp* :  segmentation_models_pytorch
+
 3. Listing the supported criterion
-4. **Model Selection**
-5. **Experiment configurations**
-6. Dataset configurations
 
+   ```yaml
+   CRITERION_AVAILABLE:
+       # available_framework: [avaliable criterions]
+       torch.nn: ["CrossEntropy"]
+       pytorch_toolbelt: ["BalancedBCEWithLogitsLoss", ... , "WingLoss"]
+   ```
 
+4. Listing the supported KFold types.
+
+   ```yaml
+   KFOLD_TYPE_AVAILABLE: ["KFold", "MultilabelStratifiedKFold"]
+   ```
+
+   > For KFold reference, see [*here*](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html).  
+   >
+   > For ML-KFold reference, see [*here*](https://github.com/trent-b/iterative-stratification).
+
+5. **Model Selection**
+
+   * Torchvision
+
+     ```yaml
+     SELECTED:
+         # 1. IF you use torchvision model
+         FRAMEWORK: "torchvision"
+         MODEL: "lraspp_mobilenet_v3_large" # also used for submission save.
+         MODEL_CFG:
+             pretrained: True
+     ```
+
+   * smp
+
+     ```yaml
+     SELECTED:
+         # 2. IF you use smp model
+         # smp.create_model(**cfg["SELECTED"]["MODEL_CFG"]) 형태로 사용하기 때문에
+         # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
+         FRAMEWORK: "segmentation_models_pytorch"
+         MODEL_CFG:
+             arch: "fpn"                 # DECODER
+             encoder_name: "timm-efficientnet-b6" # ENCODER
+             encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
+                                                  # (https://smp.readthedocs.io/en/latest/encoders.html)
+                                                  # ("imagenet", "advpros", "noisy-student" 등)
+             in_channels: 3 # fixed
+             classes: 11    # fixed
+     ```
+
+6. Criterion Selection
+
+   ```yaml
+   SELECTED:
+   	# ...
+   	CRITERION: 
+           FRAMEWORK: "pytorch_toolbelt"
+           USE: "SoftCrossEntropyLoss"
+           CFG:
+   ```
+
+7. **Experiment configurations**
+
+   * seed, epochs, batch size, learning rate, the number of workers, validation period config
+
+     ```yaml
+     EXPERIMENTS:
+         SEED: 21
+         NUM_EPOCHS: 30
+         BATCH_SIZE: 16
+         LEARNING_RATE: 1e-4
+         NUM_WORKERS: 4
+         VAL_EVERY: 5
+         
+         # ...
+     ```
+
+   * K-Fold config
+
+     ```yaml
+     EXPERIMENTS:
+         # ...
+         
+         KFOLD:
+             TURN_ON: True
+             TYPE: "MultilabelStratifiedKFold"
+             NUM_FOLD: 5
+         
+         # ...
+     ```
+
+   * Autocast
+
+     ```yaml
+     EXPERIMENTS:
+         # ...
+         
+         AUTOCAST_TURN_ON: True
+         
+         # ...
+     ```
+
+   * wandb config
+
+     ````YAML
+     EXPERIMENTS:
+         # ...
+         
+         WNB:
+             TURN_ON: True
+             INIT:
+                 entity: "ai_tech_level2-cv-18"
+                 project: "seunghun_T2042"
+                 name: "fpn_timm-efficientnet-b6" # recommended to change if wnb is turn-on.
+          
+          # ...
+     ````
+
+   * Configure directories for best performance model saving and submission file saving
+
+     ```yaml
+     EXPERIMENTS:
+     	# ...
+     	
+     	SAVED_DIR: 
+             BEST_MODEL: "./saved"
+             SUBMISSION: "./submission"
+             
+         # ...
+     ```
+
+   * Configure train transforms, which will be compounded by `A.OneOf`.
+
+     ```yaml
+     EXPERIMENTS:
+     	# ...
+     	
+     	TRAIN_TRANS: # ToTensorV2 는 기본으로 들어가있고 Albumentation 의 augmentation 이용
+             GridDistortion: 
+                 p: 1.0
+             RandomGridShuffle:
+                 p: 1.0
+             RandomResizedCrop:
+                 height: 512
+                 width: 512
+                 p: 1.0
+             HorizontalFlip:
+                 p: 1.0
+             VerticalFlip:
+                 p: 1.0
+             GridDropout:
+                 p: 1.0
+             ElasticTransform:
+                 p: 1.0
+     	
+     	# ...
+     ```
+
+   * TTA config
+
+     ```yaml
+     EXPERIMENTS:
+     	# ...
+     	
+     	TTA:
+             TURN_ON: True
+             AVAILABLE_LIST: # only support 2 below TTAs.
+                 VERTICAL_FLIP_TURN_ON: True
+                 HORIZONTAL_FLIP_TURN_ON: True
+     ```
+
+     > Only support vertical flip and horizontal flip.   
+     >
+     > (augmentations are equal to reverse of augmentations.)
+
+8. Dataset configurations
+
+   ```yaml
+   DATASET:
+       PATH: "./rawdata" # Config dataset root
+       ANNS_FILE_NAME: "train_all.json"
+       TRAIN_FILE_NAME: "train_all.json"
+       VAL_FILE_NAME: "val.json" # not used if you set "KFOLD TURN ON - True".
+       TEST_FILE_NAME: "test.json"
+       NUM_CLASSES: 11
+   ```
+
+   
 
 # 4. Our Experiments
 
