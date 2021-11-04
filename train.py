@@ -37,10 +37,11 @@ from util.utils import label_accuracy_score, add_hist
 from util.eda import eda, get_df_train_categories_counts, add_bg_index_to, get_anns_imgs
 
 from data.dataloader import (
-    get_dataloaders,
-    get_datasets,
     collate_fn,
     get_val_dataset_for_kfold,
+    get_train_dataloader,
+    get_val_dataloader,
+    get_train_dataset,
 )
 
 from config.read_config import print_ver_n_settings, get_args, get_cfg_from
@@ -443,8 +444,9 @@ def train_kfold(
     category_names,
     cfg,
 ):
-    train_dataset, _, _ = get_datasets(cfg, category_names)
+    train_dataset = get_train_dataset(cfg, category_names)
     val_dataset = get_val_dataset_for_kfold(cfg, category_names)
+    
     batch_size = cfg["EXPERIMENTS"]["BATCH_SIZE"]
     num_workers = cfg["EXPERIMENTS"]["NUM_WORKERS"]
     
@@ -464,7 +466,7 @@ def train_kfold(
             num_workers=num_workers,
             collate_fn=collate_fn,
             sampler=train_subsampler,
-            persistent_workers=True,
+            # persistent_workers=True,
         )
 
         val_dataloader = DataLoader(
@@ -473,7 +475,7 @@ def train_kfold(
             num_workers=num_workers,
             collate_fn=collate_fn,
             sampler=val_subsampler,
-            persistent_workers=True,
+            # persistent_workers=True,
         )
 
         train_one(
@@ -553,7 +555,8 @@ def main():
 
     # 모델 및 데이터로더 불러오기
     model = get_trainable_model(cfg)
-    train_dataloader, val_dataloader, _ = get_dataloaders(cfg, category_names)
+    train_dataloader = get_train_dataloader(cfg, category_names)
+    val_dataloader = get_val_dataloader(cfg, category_names)
 
     train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
 

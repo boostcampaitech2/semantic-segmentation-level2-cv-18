@@ -14,7 +14,7 @@ import albumentations as A
 import torch
 import torch.nn.functional as F
 
-from data.dataloader import get_dataloaders
+from data.dataloader import get_test_dataloader
 
 from config.read_config import print_ver_n_settings, get_args, get_cfg_from
 from config.wnb import wnb_init
@@ -278,7 +278,7 @@ def main():
     category_names = sorted_df_train_categories_counts["Categories"].to_list()
 
     # 테스트 데이터로더 불러오기
-    _, _, test_dataloader = get_dataloaders(cfg, category_names)
+    test_dataloader = get_test_dataloader(cfg, category_names)
 
     # CSV 파일 생성
     create_submission(test_dataloader=test_dataloader, device=DEVICE, cfg=cfg)
