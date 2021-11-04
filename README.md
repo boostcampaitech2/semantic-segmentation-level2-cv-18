@@ -24,7 +24,7 @@
 
 |    Name    | Items                                    |
 | :--------: | ---------------------------------------- |
-|   model    | deeplabv3, deeplabv3+, unet++, hrnet+ocr |
+|   model    | deeplabv3, deeplabv3+, unet++, hrnet_ocr |
 |  dataset   | custom(without augmix), augmix           |
 |    loss    | CE, Dice, Focal, IoU, DiceCE, DiceFocal  |
 | optimizer  | madgrad, Adam, AdamW                     |
