@@ -12,7 +12,7 @@ from pprint import pprint
 from util.ploting import plot_train_dist
 from util.eda import get_df_train_categories_counts, add_bg_index_to, eda
 
-from data.dataloader import get_dataloaders
+from data.dataloader import get_train_dataloader, get_val_dataloader, get_test_dataloader
 
 from train import train, get_trainable_model
 
@@ -45,14 +45,14 @@ if __name__ == "__main__":
 
     # 모델 및 데이터로더 불러오기
     model = get_trainable_model(cfg)
-    train_dataloader, val_dataloader, test_dataloader = get_dataloaders(
-        cfg, category_names
-    )
+    train_dataloader = get_train_dataloader(cfg, category_names)
+    val_dataloader = get_val_dataloader(cfg, category_names)
 
     # 모델 훈련
     train(cfg, model, train_dataloader, val_dataloader, category_names, device=DEVICE)
 
     # CSV 파일 생성
+    test_dataloader = get_test_dataloader(cfg, category_names)
     create_submission(test_dataloader=test_dataloader, device=DEVICE, cfg=cfg)
 
     # wandb 사용 시 종료
