@@ -68,6 +68,7 @@ def create_trash_label_colormap():
         df_class_dict["b"].tolist(),
     ]
     color_map = list(zip(*color_map))
+    color_map = np.array(color_map)
 
     return color_map
 
