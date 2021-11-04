@@ -193,9 +193,9 @@ $ rm rawdata.zip
    SELECTED:
    	# ...
    	CRITERION: 
-           FRAMEWORK: "pytorch_toolbelt"
-           USE: "SoftCrossEntropyLoss"
-           CFG:
+   		FRAMEWORK: "pytorch_toolbelt"
+   		USE: "SoftCrossEntropyLoss"
+   		CFG:
    ```
 
 7. **Experiment configurations**
@@ -259,9 +259,9 @@ $ rm rawdata.zip
 
      ```yaml
      EXPERIMENTS:
-     	# ...
-     	
-     	SAVED_DIR: 
+         # ...
+         
+         SAVED_DIR: 
              BEST_MODEL: "./saved"
              SUBMISSION: "./submission"
              
@@ -272,9 +272,9 @@ $ rm rawdata.zip
 
      ```yaml
      EXPERIMENTS:
-     	# ...
-     	
-     	TRAIN_TRANS: # ToTensorV2 는 기본으로 들어가있고 Albumentation 의 augmentation 이용
+         # ...
+         
+         TRAIN_TRANS: # ToTensorV2 는 기본으로 들어가있고 Albumentation 의 augmentation 이용
              GridDistortion: 
                  p: 1.0
              RandomGridShuffle:
@@ -291,16 +291,16 @@ $ rm rawdata.zip
                  p: 1.0
              ElasticTransform:
                  p: 1.0
-     	
-     	# ...
+                 
+         # ...
      ```
 
    * TTA config
 
      ```yaml
      EXPERIMENTS:
-     	# ...
-     	
+         # ...
+         
      	TTA:
              TURN_ON: True
              AVAILABLE_LIST: # only support 2 below TTAs.
