@@ -1,8 +1,10 @@
+import yaml
 from torch.optim import AdamW, Adam
 from madgrad import MADGRAD
 import ttach as tta
 
 from src.models import *
+from src.model_hrnet import *
 from src.losses import *
 from src.transforms import tta_tf
 
@@ -16,6 +18,8 @@ def select_model(model_name):
 		model = DeepLabV3Plus()
 	elif model_name == 'unet++':
 		model = UnetPlusPlus()
+	elif model_name == 'hrnet_ocr':
+		model = Encoder()
 	return model
 
 

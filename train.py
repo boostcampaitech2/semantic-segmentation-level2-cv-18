@@ -64,7 +64,7 @@ def main(yaml):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-y', '--yaml', type=str, default='default.yaml', help='(default: default.yaml)')
+	parser.add_argument('-y', '--yaml', type=str, default='./configs/default.yaml', help='(default: ./configs/default.yaml)')
 	parser.add_argument('-p', '--pseudo', type=int, default=0, help='(default: 0)')
 	parser.add_argument('-csv', '--ps_csv', type=str, default='/opt/ml/submission/pseudo.csv', help='(default: /opt/ml/submission/pseudo.csv)')
 	args = parser.parse_args()

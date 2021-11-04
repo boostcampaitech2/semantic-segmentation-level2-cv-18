@@ -41,5 +41,5 @@ tta_tf = tta.Compose([
 tta_tf_tmp = tta.Compose([
 		tta.HorizontalFlip(),
 		tta.VerticalFlip(),
-		tta.Rotate90([0, 90]),					    
+		tta.Rotate90([0, 90])			    
 ])

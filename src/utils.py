@@ -10,7 +10,7 @@ import pydensecrf.densecrf as dcrf
 
 # check yaml
 def check_yaml(yaml):
-	assert yaml['model'] in ['unet++', 'deeplabv3', 'deeplabv3+'], f'Wrong Model: {yaml[model]}'
+	assert yaml['model'] in ['unet++', 'deeplabv3', 'deeplabv3+', 'hrnet_ocr'], f'Wrong Model: {yaml[model]}'
 	assert yaml['dataset'] in ['custom', 'augmix'], f'Wrong Model: {yaml[dataset]}'
 	assert yaml['loss'] in ['CE', 'Dice', 'Focal', 'IoU', 'DiceCE', 'DiceFocal'], f'Wrong Loss: {yaml[loss]}'
 	assert yaml['optimizer'] in ['madgrad', 'Adam', 'AdamW'], f'Wrong Loss: {yaml[optimizer]}'
@@ -115,11 +115,12 @@ def _fast_hist(label_true, label_pred, n_class):
 def dense_crf_wrapper(args):
 	return dense_crf(args[0], args[1])
 
+
 # Reference
-# https://github.com/kunalmessi10/FCN-with-CRF-post-processing/blob/master/crf.py
+# https://github.com/kunalmessi10/FCN-with-CRF-post-processing/blob/3633c45cda672b33686c005c09ebc9ffb1a6859e/crf.py
 # https://www.programcreek.com/python/example/106424/pydensecrf.densecrf.DenseCRF2D
 def dense_crf(img, output_probs):
-	MAX_ITER = 10
+	MAX_ITER = 50
 	POS_W = 3
 	POS_XY_STD = 3
 	Bi_W = 4
@@ -129,8 +130,10 @@ def dense_crf(img, output_probs):
 	c = output_probs.shape[0]
 	h = output_probs.shape[1]
 	w = output_probs.shape[2]
+	
 	U = utils.unary_from_softmax(output_probs)
 	U = np.ascontiguousarray(U)
+
 	img = np.ascontiguousarray(img)
 	
 	d = dcrf.DenseCRF2D(w, h, c)

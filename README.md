@@ -1,10 +1,10 @@
 **:warning: This is a branch created by the [author](https://github.com/lisy0123)'s wants. The regular branch is [here](https://github.com/boostcampaitech2/semantic-segmentation-level2-cv-18/tree/main).**
 
+## Start
 
+`bash run.sh` and follow the instructions.
 
-(Temporary: `python train.py -y augmix.yaml -p 1`)
-
-
+---
 
 ## To Do List
 
@@ -15,23 +15,24 @@
 - [x] checkpoint according to iou, loss, both
 - [x] automatically generate checkpoint folder (like yolov5)
 - [x] pseudo on/off
+- [x] bash script
+- [x] add model, HRNET+OCR
+- [ ] add loss, SoftCE
 - [ ] change pseudo parser into store_true, unify parsers
-- [ ] create checkpoint folder set by the user(on/off=automatically(exp1, 2...))
-- [ ] bash script => ing
 
 
 
-|    Name    | Items                                   |
-| :--------: | --------------------------------------- |
-|   model    | deeplabv3, deeplabv3+, unet++           |
-|  dataset   | custom(without augmix), augmix          |
-|    loss    | CE, Dice, Focal, IoU, DiceCE, DiceFocal |
-| optimizer  | madgrad, Adam, AdamW                    |
-| scheduler  | CosineAnnealingWarmupRestarts           |
-| checkpoint | all(iou & loss), iou, loss              |
-| inference  | basic, dense crf(on/off), tta(on/off)   |
-| load model | (on/off)                                |
-|   pseudo   | (on/off)                                |
+|    Name    | Items                                    |
+| :--------: | ---------------------------------------- |
+|   model    | deeplabv3, deeplabv3+, unet++, hrnet+ocr |
+|  dataset   | custom(without augmix), augmix           |
+|    loss    | CE, Dice, Focal, IoU, DiceCE, DiceFocal  |
+| optimizer  | madgrad, Adam, AdamW                     |
+| scheduler  | CosineAnnealingWarmupRestarts            |
+| checkpoint | all(iou & loss), iou, loss               |
+| inference  | basic, dense crf(on/off), tta(on/off)    |
+| load model | (on/off)                                 |
+|   pseudo   | (on/off)                                 |
 
 
 

@@ -1,9 +1,9 @@
 seed: 21
 model: 'unet++'
-dataset: 'custom'
+dataset: 'augmix'
 batch_size: 16
-epochs: 60
-loss: 'DiceCE'
+epochs: 30
+loss: 'CE'
 optimizer: 'madgrad'
 learning_rate: 1e-4
 max_lr: 1e-3
@@ -11,14 +11,14 @@ min_lr: 1e-5
 
 scheduler_step: 5
 weight_decay: 1e-6
-log_step: 100
+log_step: 50
 checkpoint: 'all'
 
-wandb_name: 'test'
+wandb_name: 'augmix'
 load_path: 'test'
 is_load: False
 is_crf: True
-is_tta: True
+is_tta: False
 data_dir: '/opt/ml/segmentation/input/data'
 saved_dir: '/opt/ml/checkpoints'
 inference_dir: '/opt/ml/checkpoints/exp1'

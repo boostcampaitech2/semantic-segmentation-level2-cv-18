@@ -35,7 +35,7 @@ def inference(yaml):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-y', '--yaml', type=str, default='train.yaml', help='(default: train.yaml)')
+	parser.add_argument('-y', '--yaml', type=str, default='./configs/default.yaml', help='(default: ./configs/default.yaml)')
 	args = parser.parse_args()
 
 	with open(args.yaml, errors='ignore') as f:
