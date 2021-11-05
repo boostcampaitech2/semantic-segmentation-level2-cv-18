@@ -5,17 +5,18 @@ INFER="inference.py"
 YAML="./configs/default.yaml"
 CSV="./submission/pseudo.csv"
 ALL=($TRAIN $INFER $YAML "./src/dataloader.py" "./src/dataset.py" \
-		 "./src/transforms.py" "./src/models.py" "./src/losses.py" "./src/schedulers.py" \
-		"./src/select.py" "./src/pipeline.py" "./src/utils.py" "./src/make.py" "./src/save.py" \
-		"./src/model_hrnet.py")
+		 "./src/transforms.py" "./src/models.py" "./src/losses.py" \
+		 "./src/schedulers.py" "./src/select.py" "./src/pipeline.py" \
+		 "./src/utils.py" "./src/make.py" "./src/save.py" \
+		 "./src/model_hrnet.py")
 
-C_BD="\e[1m"
-C_R="\e[31m"
-C_Y="\e[33m"
-C_G="\e[32m"
-C_B="\e[34m"
-C_P="\e[35m"
-C_RS="\e[0m"
+C_BD="\033[1m"
+C_R="\033[31m"
+C_Y="\033[33m"
+C_G="\033[32m"
+C_B="\033[34m"
+C_P="\033[35m"
+C_RS="\033[0m"
 
 M_FILE="All files exist. Continue..."
 M_CT=" files missing! Continue? (Y/N): "
@@ -120,6 +121,7 @@ while [ $CONTINUE ]; do
 	fi
 	echo -en "$C_Y$ER$C_RS"
 done
+
 echo -e "\nConfig file: ${C_B}$YAML$C_RS"
 cat $YAML
 

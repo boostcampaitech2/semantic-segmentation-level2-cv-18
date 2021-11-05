@@ -4,6 +4,10 @@
 
 `bash run.sh` and follow the instructions.
 
+### Example
+
+![tets](https://user-images.githubusercontent.com/60209937/140453134-e451954b-d2eb-4cfb-9b3f-28d2ccfeb2f6.gif)
+
 ---
 
 ## To Do List
