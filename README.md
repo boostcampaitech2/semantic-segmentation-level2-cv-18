@@ -191,11 +191,12 @@ $ rm rawdata.zip
 
    ```yaml
    SELECTED:
-   	# ...
-   	CRITERION: 
-   		FRAMEWORK: "pytorch_toolbelt"
-   		USE: "SoftCrossEntropyLoss"
-   		CFG:
+     # ...
+   
+     CRITERION:
+       FRAMEWORK: "pytorch_toolbelt"
+       USE: "SoftCrossEntropyLoss"
+       CFG:
    ```
 
 7. **Experiment configurations**
@@ -301,10 +302,10 @@ $ rm rawdata.zip
      EXPERIMENTS:
         # ...
          
-     	TTA:
-             TURN_ON: True
-             AVAILABLE_LIST: # only support 2 below TTAs.
-                 VERTICAL_FLIP_TURN_ON: True
+        TTA:
+        			TURN_ON: True
+        			AVAILABLE_LIST: # only support 2 below TTAs.
+        					VERTICAL_FLIP_TURN_ON: True
                  HORIZONTAL_FLIP_TURN_ON: True
      ```
 
@@ -337,7 +338,7 @@ $ rm rawdata.zip
    - Classes : 11
 - Fold : KFold, MultilabelStratifiedKFold
    - Number of fold : 5
-- Learning rate : 0.0001
+- Learning rate : 2e-4
 - TTA : Horizontal flip
 
 ## 4.2. Loss
@@ -379,14 +380,14 @@ By using light model, we perform quickly various augmentation experiments.
 2. Single Augmentation Observation
 
    | Augmentation (Fix 24 epochs) | mIoU  | mIoU derivation |
-   | :--------------------------- | :---: | --------------- |
-   | None                         | 0.571 | 0.0             |
-   | Blur                         | 0.572 | **+0.001**      |
-   | GridDistortion               | 0.583 | **+0.012**      |
-   | RandomGridShuffle            | 0.585 | **+0.014**      |
-   | GridDropout                  | 0.587 | **+0.016**      |
-   | ElasticTransform             | 0.598 | **+0.027**      |
-   | RandomResizeCrop             | 0.619 | **+0.048**      |
+   | :--------------------------: | :---: | :-------------: |
+   |             None             | 0.571 |       0.0       |
+   |             Blur             | 0.572 |   **+0.001**    |
+   |        GridDistortion        | 0.583 |   **+0.012**    |
+   |      RandomGridShuffle       | 0.585 |   **+0.014**    |
+   |         GridDropout          | 0.587 |   **+0.016**    |
+   |       ElasticTransform       | 0.598 |   **+0.027**    |
+   |       RandomResizeCrop       | 0.619 |   **+0.048**    |
 
 3. A test about compound augmentation by using `albumentations.core.composition.OneOf` (see [*here*](https://albumentations.ai/docs/api_reference/core/composition/#albumentations.core.composition.OneOf))
 
@@ -397,10 +398,10 @@ By using light model, we perform quickly various augmentation experiments.
    * Result
 
      | Epoch (Fix augmentation) | mIoU  | mIoU derivation |
-     | :----------------------: | :---: | :-------------- |
-     |        24 epochs         | 0.609 | **+0.038**      |
-     |        48 epochs         | 0.631 | **+0.060**      |
-     |        96 epochs         | 0.653 | **+0.082**      |
+     | :----------------------: | :---: | :-------------: |
+     |        24 epochs         | 0.609 |   **+0.038**    |
+     |        48 epochs         | 0.631 |   **+0.060**    |
+     |        96 epochs         | 0.653 |   **+0.082**    |
 
      > As epoch increase, mIoU also increase. 
 
@@ -439,7 +440,9 @@ You can use this module in `./util/pseudo.py`
 | Public LB  | `0.781` |
 | Private LB | `0.717` |
 
-## 5.2. Some images after model inference.
+## 5.2. Images after model inference
+
+<img src="https://user-images.githubusercontent.com/60209937/140480560-83d0e246-df50-476a-9bb9-7ba5be2c83ac.png" alt="image2" style="zoom:70%;" /><img src="https://user-images.githubusercontent.com/60209937/140480571-9e7add65-7811-455e-b825-c1db8e7d2596.png" alt="image3" style="zoom:70%;" />
 
 
 
