@@ -67,11 +67,9 @@ SELECTED:
     # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
     FRAMEWORK: "segmentation_models_pytorch"
     MODEL_CFG:
-        arch: "fpn"                 # DECODER
-        encoder_name: "timm-efficientnet-b6" # ENCODER
-        encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
-                                             # (https://smp.readthedocs.io/en/latest/encoders.html)
-                                             # ("imagenet", "advpros", "noisy-student" 등)
+        arch: "fpn"                          # DECODER
+        encoder_name: "timm-efficientnet-b6" # ENCODER (https://smp.readthedocs.io/en/latest/encoders.html)
+        encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이 ("imagenet", "advpros", "noisy-student" 등)
         in_channels: 3 # fixed
         classes: 11    # fixed
     
