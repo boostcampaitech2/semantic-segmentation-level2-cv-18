@@ -191,12 +191,12 @@ $ rm rawdata.zip
 
    ```yaml
    SELECTED:
-   		# ...
-   	
-   		CRITERION: 
-   			FRAMEWORK: "pytorch_toolbelt"
-   			USE: "SoftCrossEntropyLoss"
-   			CFG:
+     # ...
+   
+     CRITERION:
+       FRAMEWORK: "pytorch_toolbelt"
+       USE: "SoftCrossEntropyLoss"
+       CFG:
    ```
 
 7. **Experiment configurations**
