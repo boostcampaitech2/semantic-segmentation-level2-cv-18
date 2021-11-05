@@ -44,7 +44,7 @@ def make_submission(submission_dir, save_name, file_name_list, preds_array):
 	if not os.path.exists(submission_dir):
 		os.makedirs(submission_dir)
 	file_names = [y for x in file_name_list for y in x]
-	submission = pd.read_csv('/opt/ml/submission/sample_submission.csv', index_col=None)
+	submission = pd.read_csv('./submission/sample_submission.csv', index_col=None)
 	
 	for file_name, string in zip(file_names, preds_array):
 		submission = submission.append(

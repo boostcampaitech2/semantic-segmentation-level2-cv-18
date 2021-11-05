@@ -31,7 +31,6 @@ def tv_dataloader(dataset, data_dir, batch_size, collate_fn, pseudo_csv):
 			dataset=val_dataset, batch_size=batch_size,
 			shuffle=True, num_workers=4, collate_fn=collate_fn, drop_last=True
 			)
-	pseudo_csv
 	pseudo_loader = DataLoader(
 			dataset=pseudo_dataset, batch_size=batch_size,
 			shuffle=True, num_workers=4, collate_fn=collate_fn, drop_last=True
