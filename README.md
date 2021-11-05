@@ -425,7 +425,7 @@ If you wants modify your path, you should fix this part in code
         "test_file_path" : "", # test_json path
         "result_file_path" : "", # json file you want to save result
         "maxWidth" : 256, # test image width
-        "maxHeight" : 256, # test image width
+        "maxHeight" : 256, # test image height
     }
 ```
 You can use this module in `./util/pseudo.py` 
