@@ -146,15 +146,15 @@ $ rm rawdata.zip
        pytorch_toolbelt: ["BalancedBCEWithLogitsLoss", ... , "WingLoss"]
    ```
 
-4. Listing the supported KFold types.
+4. Listing the supported K-Fold types.
 
    ```yaml
    KFOLD_TYPE_AVAILABLE: ["KFold", "MultilabelStratifiedKFold"]
    ```
 
-   > For KFold reference, see [*here*](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html).  
+   > For K-Fold reference, see [*here*](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html).  
    >
-   > For ML-KFold reference, see [*here*](https://github.com/trent-b/iterative-stratification).
+   > For MLSK-Fold reference, see [*here*](https://github.com/trent-b/iterative-stratification).
 
 5. **Model Selection**
 
@@ -178,11 +178,9 @@ $ rm rawdata.zip
          # MODEL_CFG 아래는 소문자가 좋습니다. (PRETRAINED -> pretrained)
          FRAMEWORK: "segmentation_models_pytorch"
          MODEL_CFG:
-             arch: "fpn"                 # DECODER
-             encoder_name: "timm-efficientnet-b6" # ENCODER
-             encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이. 
-                                                  # (https://smp.readthedocs.io/en/latest/encoders.html)
-                                                  # ("imagenet", "advpros", "noisy-student" 등)
+             arch: "fpn"                          # DECODER
+             encoder_name: "timm-efficientnet-b6" # ENCODER (https://smp.readthedocs.io/en/latest/encoders.html) 
+             encoder_weights: "noisy-student"     # ENCODER 마다 가능한 DATASET 상이 ("imagenet", "advpros", "noisy-student" 등)
              in_channels: 3 # fixed
              classes: 11    # fixed
      ```
@@ -302,16 +300,16 @@ $ rm rawdata.zip
      EXPERIMENTS:
         # ...
          
-        TTA:
-        			TURN_ON: True
-        			AVAILABLE_LIST: # only support 2 below TTAs.
-        					VERTICAL_FLIP_TURN_ON: True
-                 HORIZONTAL_FLIP_TURN_ON: True
+         TTA:
+             TURN_ON: True
+             AVAILABLE_LIST: # only support 2 below TTAs.
+             VERTICAL_FLIP_TURN_ON: True
+             HORIZONTAL_FLIP_TURN_ON: True
      ```
 
      > Only support vertical flip and horizontal flip.   
      >
-     > (augmentations are equal to reverse of augmentations.)
+     > (Augmentations are equal to reverse of themselves.)
 
 8. Dataset configurations
 
@@ -367,7 +365,7 @@ By using light model, we perform quickly various augmentation experiments.
 
 > Selected model : `LRASPP mobilenetv3 Large` in torchvision - for more detail, see [*here*](https://pytorch.org/vision/stable/models.html#semantic-segmentation)
 
-1. Hyper-parameter(`Epochs`) Tuning for the *LRASPP mobilenet v3 large* model.
+1. Hyperparameter(`Epochs`) Tuning for the *LRASPP mobilenet v3 large* model.
 
    |  Epochs   | mIoU  | mIoU derivation |
    | :-------: | :---: | --------------- |
@@ -409,15 +407,15 @@ By using light model, we perform quickly various augmentation experiments.
 
 ## 4.8. TTA
 
-We try to use [*ttach* library](https://github.com/qubvel/ttach) but, can't use it. So, we apply only flip TTA, which is satisfied that augmentation is equal to reverse augmentation.
+We tried to use [*ttach* library](https://github.com/qubvel/ttach) but, couldn't use it. So, we apply only flip TTA, which is satisfied that augmentation is equal to reverse augmentation.
 
 You can add such augmentation function codes in `./util/tta.py` and modify `./config/default.yaml` and `get_tta_list` function in `./util/tta.py`.
 
 ## 4.9. Pseudo labeling
 
-We try to used the method of converting the resulting csv file into coco-dataset to apply pseudo labeling.
+We convert the resulting CSV file into COCO-dataset to apply pseudo labelling.
 
-If you wants modify your path, you should fix this part in code
+If you want to modify your path, you should change this part in code.
 
 ``` py
     # config
@@ -453,7 +451,7 @@ You can use this module in `./util/pseudo.py`
 | 김서기 (T2035) |     [*Link*](https://github.com/seogi98)      | Research(*HRNet*, *MMSeg* library), Pseudo Labeling, TTA    |
 | 김승훈 (T2042) | [*Link*](https://github.com/lead-me-read-me)  | Find Augmentations, Code Refactoring                        |
 | 배민한 (T2260) |    [*Link*](https://github.com/Minhan-Bae)    | Research(*smp* library, loss), Model Enhancement, K-Fold    |
-| 손지아 (T2113) |     [*Link*](https://github.com/oikosohn)     | Research(*smp* library, loss), Model Enhancement, MLK-Fold  |
+| 손지아 (T2113) |     [*Link*](https://github.com/oikosohn)     | Research(*smp* library, loss), Model Enhancement, MLSK-Fold |
 | 이상은 (T2157) |     [*Link*](https://github.com/lisy0123)     | Research(*HRNet*, optimizer, loss), Pseudo Labeling, Augmix |
 | 조익수 (T2213) | [*Link*](https://github.com/projectcybersyn2) | Research(*MMseg* library)                                   |
 
