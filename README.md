@@ -414,7 +414,21 @@ You can add such augmentation function codes in `./util/tta.py` and modify `./co
 
 ## 4.9. Pseudo labeling
 
+We try to used the method of converting the resulting csv file into coco-dataset to apply pseudo labeling.
 
+If you wants modify your path, you should fix this part in code
+
+``` py
+    # config
+    cfg = {
+        "csv_file_path" : "", # csv file you want to convert
+        "test_file_path" : "", # test_json path
+        "result_file_path" : "", # json file you want to save result
+        "maxWidth" : 256, # test image width
+        "maxHeight" : 256, # test image width
+    }
+```
+You can use this module in `./util/pseudo.py` 
 
 # 5. Result
 
